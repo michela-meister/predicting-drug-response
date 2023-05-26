@@ -38,8 +38,4 @@ df = df.loc[df.duration >= min_duration]
 # Compute function of volume
 df['V_V0'] = df['end_vol'].div(df['start_vol'])
 df['log(V_V0+1)'] = np.log2(df['V_V0'] + 1)
-df = df.merge(df.groupby(['Sample', 'Drug'])['log(V_V0+1)'].mean().reset_index(name='log(V_V0+1)_sm'), 
-              on=['Sample', 'Drug'], 
-              validate='many_to_one')
-df['log(V_V0+1)_cen'] = df['log(V_V0+1)'] - df['log(V_V0+1)_sm']
-df.to_csv(write_dir + '/welm_pdx_clean_mid_volume.csv')
+df.to_csv(write_dir + '/welm_pdx_clean_mid_volume.csv', index=False)
