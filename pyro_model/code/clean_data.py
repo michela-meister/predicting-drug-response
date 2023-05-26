@@ -1,9 +1,17 @@
 import numpy as np
 import pandas as pd
+import sys
+
+NUM_ARGS = 3
+n = len(sys.argv)
+if n != NUM_ARGS:
+    print("Error: " + str(NUM_ARGS) + " arguments needed; only " + str(n) + " arguments given.")
+read_fn = sys.argv[1].split("=")[1]
+write_dir = sys.argv[2].split("=")[1]
+
 
 # edit DATA to load in welm_pdx.csv
-DATA = 'data/welm_pdx.csv'
-df = pd.read_csv(DATA)
+df = pd.read_csv(read_fn)
 
 # Collapse drug names
 df['Drug'] = df['Drug'].str.strip()
@@ -44,4 +52,4 @@ assert df.groupby(cols)['source_file'].nunique().max() == 1
 assert df.groupby(cols)['excel_sheet'].nunique().max() == 1
 
 # save data
-df.to_csv('data/welm_pdx_clean.csv', index=False)
+df.to_csv(write_dir + '/welm_pdx_clean.csv', index=False)

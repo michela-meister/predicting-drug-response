@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 import torch
 import numpy as np
@@ -11,16 +12,6 @@ import pyro
 import graphviz
 import pyro.distributions as dist
 import pyro.distributions.constraints as constraints
-
-smoke_test = ('CI' in os.environ)
-assert pyro.__version__.startswith('1.8.4')
-
-pyro.enable_validation(True)
-pyro.set_rng_seed(1)
-logging.basicConfig(format='%(message)s', level=logging.INFO)
-
-# Set matplotlib settings
-plt.style.use('default')
 
 # Returns list of normally-distributed variables with means from dictionary d and constant variance "variance"
 def normal_variables_from_dict(d, variance):
@@ -58,7 +49,25 @@ def get_means(var_list):
         means[v] = 0
     return means
 
-df = pd.read_pickle('data/split/train.pkl')
+NUM_ARGS = 3
+n = len(sys.argv)
+if n != NUM_ARGS:
+    print("Error: " + str(NUM_ARGS) + " arguments needed; only " + str(n) + " arguments given.")
+read_fn = sys.argv[1].split("=")[1]
+write_dir = sys.argv[2].split("=")[1]
+
+
+smoke_test = ('CI' in os.environ)
+assert pyro.__version__.startswith('1.8.4')
+
+pyro.enable_validation(True)
+pyro.set_rng_seed(1)
+logging.basicConfig(format='%(message)s', level=logging.INFO)
+
+# Set matplotlib settings
+plt.style.use('default')
+
+df = pd.read_pickle(read_fn)
 vol_name = 'log(V_V0+1)_obs'
 sample_means = get_means(df['sample'].unique())
 drug_means = get_means(df['drug'].unique())
@@ -66,7 +75,7 @@ sample_list, drug_list, obs_list = format_for_model(df, vol_name)
 pyro.render_model(model, 
 	model_args=(sample_list, drug_list, obs_list, sample_means, drug_means), 
 	render_distributions=True, 
-	filename='output/model_diagram.png')
+	filename=write_dir + '/model_diagram.png')
 pyro.clear_param_store()
 kernel = pyro.infer.mcmc.NUTS(model, jit_compile=True)
 mcmc = pyro.infer.MCMC(kernel, num_samples=500, warmup_steps=500)
@@ -84,4 +93,4 @@ axes[1].set_xlabel('Navitoclax')
 
 sns.histplot(mcmc_samples['Vehicle'], ax=axes[2])
 axes[2].set_xlabel('Vehicle')
-plt.savefig('output/model_stats.png')
+plt.savefig(write_dir + '/model_stats.png')

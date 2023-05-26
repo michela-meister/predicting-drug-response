@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
+import sys
 
 FRACTION_TRAIN = .8
-OUT_DIR = 'data/split/'
 
 def candidate_split(df, ntrain):
     p = df[['sample', 'drug']].drop_duplicates().reset_index(drop=True)
@@ -62,7 +62,15 @@ def validate_split(train, test, df):
 def group_observations(df, vol_name):
     return df.groupby(['sample', 'drug'])[vol_name].apply(list).reset_index(name = vol_name + '_obs')
 
-df = pd.read_csv('data/welm_pdx_clean_mid_volume.csv')
+
+NUM_ARGS = 3
+n = len(sys.argv)
+if n != NUM_ARGS:
+    print("Error: " + str(NUM_ARGS) + " arguments needed; only " + str(n) + " arguments given.")
+read_fn = sys.argv[1].split("=")[1]
+write_dir = sys.argv[2].split("=")[1]
+
+df = pd.read_csv(read_fn)
 df = df[['Sample', 'Drug', 'log(V_V0+1)']]
 # map columns
 df = df.rename(columns={'Sample': 'sample', 'Drug': 'drug'})
@@ -70,5 +78,5 @@ vol_name = 'log(V_V0+1)'
 df = group_observations(df, vol_name)
 train, test = split_data(df, vol_name)
 validate_split(train, test, df)
-train.to_pickle(OUT_DIR + '/train.pkl')
-test.to_pickle(OUT_DIR + '/test.pkl')
+train.to_pickle(write_dir + '/train.pkl')
+test.to_pickle(write_dir + '/test.pkl')

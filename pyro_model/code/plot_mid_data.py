@@ -1,9 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import sys
 
-df = pd.read_csv('data/welm_pdx_clean_mid.csv')
+NUM_ARGS = 3
+n = len(sys.argv)
+if n != NUM_ARGS:
+    print("Error: " + str(NUM_ARGS) + " arguments needed; only " + str(n) + " arguments given.")
+read_fn = sys.argv[1].split("=")[1]
+write_dir = sys.argv[2].split("=")[1]
 
+df = pd.read_csv(read_fn)
 # assert that each MID has exactly one sample, one drug
 assert (df.groupby('MID').Sample.nunique() == 1).all()
 assert (df.groupby('MID').Drug.nunique() == 1).all()
@@ -17,5 +24,5 @@ for mid in df.MID.unique():
     plt.xlabel('Day')
     plt.ylabel('Volume')
     plt.plot(m.Day, m.Volume)
-    fn = 'results/2023-05-25/volume_vs_day/' + str(mid) + '.png'
+    fn = write_dir + '/' + str(mid) + '.png'
     plt.savefig(fn)

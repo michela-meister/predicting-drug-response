@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import sys
 
 def enumerate_mid_names(mid_names):
     mid_dict = {}
@@ -7,7 +8,14 @@ def enumerate_mid_names(mid_names):
         mid_dict[mid_names[x]] = x
     return mid_dict
 
-df = pd.read_csv('data/welm_pdx_clean.csv')
+NUM_ARGS = 3
+n = len(sys.argv)
+if n != NUM_ARGS:
+    print("Error: " + str(NUM_ARGS) + " arguments needed; only " + str(n) + " arguments given.")
+read_fn = sys.argv[1].split("=")[1]
+write_dir = sys.argv[2].split("=")[1]
+
+df = pd.read_csv(read_fn)
 cols = ['Sample', 'Drug', 'Replicate Number', 'excel_sheet']
 estimated_mids = len(df[cols].drop_duplicates())
 
@@ -26,4 +34,4 @@ df = df.rename(columns = {'Tumor Volume mm3': 'Volume'})
 cols = ['MID', 'Sample', 'Drug', 'Day', 'Volume']
 df_out = df[cols]
 # Save file
-df_out.to_csv('data/welm_pdx_clean_mid.csv', index=False)
+df_out.to_csv(write_dir + '/welm_pdx_clean_mid.csv', index=False)

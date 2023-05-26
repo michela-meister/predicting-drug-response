@@ -1,7 +1,16 @@
 import numpy as np
 import pandas as pd
+import sys
 
-df = pd.read_csv('data/welm_pdx_clean_mid.csv')
+NUM_ARGS = 4
+n = len(sys.argv)
+if n != NUM_ARGS:
+    print("Error: " + str(NUM_ARGS) + " arguments needed; only " + str(n) + " arguments given.")
+read_fn = sys.argv[1].split("=")[1]
+write_dir = sys.argv[2].split("=")[1]
+min_duration = int(sys.argv[3].split("=")[1])
+
+df = pd.read_csv(read_fn)
 
 def add_duration(df):
     num_mids = df.MID.nunique()
@@ -24,11 +33,13 @@ def add_duration(df):
     return d[['MID', 'Sample', 'Drug', 'start_vol', 'end_vol', 'duration']]
 
 df = add_duration(df)
-
-df = df.loc[df.duration >= 21]
+# Select only values with duration at least min_duration
+df = df.loc[df.duration >= min_duration]
+# Compute function of volume
 df['V_V0'] = df['end_vol'].div(df['start_vol'])
 df['log(V_V0+1)'] = np.log2(df['V_V0'] + 1)
 df = df.merge(df.groupby(['Sample', 'Drug'])['log(V_V0+1)'].mean().reset_index(name='log(V_V0+1)_sm'), 
               on=['Sample', 'Drug'], 
               validate='many_to_one')
 df['log(V_V0+1)_cen'] = df['log(V_V0+1)'] - df['log(V_V0+1)_sm']
+df.to_csv(write_dir + '/welm_pdx_clean_mid_volume.csv')
