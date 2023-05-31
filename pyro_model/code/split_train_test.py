@@ -95,10 +95,10 @@ read_fn = sys.argv[1].split("=")[1]
 write_dir = sys.argv[2].split("=")[1]
 
 df = pd.read_csv(read_fn)
-df = df[['Sample', 'Drug', 'log(V_V0+1)', 'MID']]
+df = df[['Sample', 'Drug', 'log(V_V0)', 'MID']]
 # map columns
 df = df.rename(columns={'Sample': 'sample', 'Drug': 'drug'})
-vol_name = 'log(V_V0+1)'
+vol_name = 'log(V_V0)'
 df = group_observations(df, vol_name)
 train, test = split_data(df, vol_name)
 validate_split(train, test, df)
