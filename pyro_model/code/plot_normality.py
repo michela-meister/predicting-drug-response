@@ -52,19 +52,19 @@ min_duration = int(sys.argv[3].split("=")[1])
 # read in dataframe
 df = pd.read_pickle(read_fn)
 # convert list to rows of datapoints
-df = df[['sample', 'drug', 'log(V_V0+1)_obs']].explode('log(V_V0+1)_obs')
-df = df.rename(columns={'log(V_V0+1)_obs': 'log(V_V0+1)'})
+df = df[['sample', 'drug', 'log(V_V0)_obs']].explode('log(V_V0)_obs')
+df = df.rename(columns={'log(V_V0)_obs': 'log(V_V0)'})
 # compute sample mean
-df = df.merge(df.groupby(['sample', 'drug'])['log(V_V0+1)'].mean().reset_index(name='log(V_V0+1)_sm'),
+df = df.merge(df.groupby(['sample', 'drug'])['log(V_V0)'].mean().reset_index(name='log(V_V0)_sm'),
               on=['sample', 'drug'],
               validate='many_to_one')
 # compute mean-centered measurements
-df['log(V_V0+1)_cen'] = df['log(V_V0+1)'] - df['log(V_V0+1)_sm']
+df['log(V_V0)_cen'] = df['log(V_V0)'] - df['log(V_V0)_sm']
 # add control column
 df['control'] = df['drug'] == 'Vehicle'
 
-create_plot('log(V_V0+1)_cen', 'combined', min_duration, write_dir + '/combined.png')
-create_plot('log(V_V0+1)_cen', 'treatment', min_duration, write_dir + '/treatment.png')
-create_plot('log(V_V0+1)_cen', 'control', min_duration, write_dir + '/control.png')
+create_plot('log(V_V0)_cen', 'combined', min_duration, write_dir + '/combined.png')
+create_plot('log(V_V0)_cen', 'treatment', min_duration, write_dir + '/treatment.png')
+create_plot('log(V_V0)_cen', 'control', min_duration, write_dir + '/control.png')
 
 
