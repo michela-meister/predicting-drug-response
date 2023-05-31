@@ -6,6 +6,8 @@ import sys
 
 from scipy.stats import norm, normaltest
 
+NBINS = 20
+
 def normality_test(x, alpha):
     k2, p = normaltest(x)
     s = 'p = ' + str(round(p, 6)) + ' --> '
@@ -30,7 +32,7 @@ def create_plot(val, group, min_duration, write_fn):
     x_axis = np.arange(np.min(x), np.max(x), 0.001)
     mean = np.mean(x)
     std = np.std(x)
-    sns.histplot(x, stat='density')
+    sns.histplot(x, stat='density', bins=NBINS)
     plt.plot(x_axis, norm.pdf(x_axis, loc=mean, scale=std), color='r')
     plt.title(val + ', ' + group + ', days >= ' + str(min_duration) + ', N = ' + str(len(x)))
     s_normality, p = normality_test(x, .05)
@@ -50,18 +52,15 @@ write_dir = sys.argv[2].split("=")[1]
 min_duration = int(sys.argv[3].split("=")[1])
 
 # read in dataframe
-df = pd.read_pickle(read_fn)
-# convert list to rows of datapoints
-df = df[['sample', 'drug', 'log(V_V0)_obs']].explode('log(V_V0)_obs')
-df = df.rename(columns={'log(V_V0)_obs': 'log(V_V0)'})
+df = pd.read_csv(read_fn)
 # compute sample mean
-df = df.merge(df.groupby(['sample', 'drug'])['log(V_V0)'].mean().reset_index(name='log(V_V0)_sm'),
-              on=['sample', 'drug'],
+df = df.merge(df.groupby(['Sample', 'Drug'])['log(V_V0)'].mean().reset_index(name='log(V_V0)_sm'),
+              on=['Sample', 'Drug'],
               validate='many_to_one')
 # compute mean-centered measurements
 df['log(V_V0)_cen'] = df['log(V_V0)'] - df['log(V_V0)_sm']
 # add control column
-df['control'] = df['drug'] == 'Vehicle'
+df['control'] = df['Drug'] == 'Vehicle'
 
 create_plot('log(V_V0)_cen', 'combined', min_duration, write_dir + '/combined.png')
 create_plot('log(V_V0)_cen', 'treatment', min_duration, write_dir + '/treatment.png')
