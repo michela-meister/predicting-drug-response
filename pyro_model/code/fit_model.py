@@ -5,6 +5,7 @@ import sys
 import torch
 import numpy as np
 import pandas as pd
+import pickle
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -68,7 +69,7 @@ logging.basicConfig(format='%(message)s', level=logging.INFO)
 plt.style.use('default')
 
 df = pd.read_pickle(read_fn)
-vol_name = 'log(V_V0+1)_obs'
+vol_name = 'log(V_V0)_obs'
 sample_means = get_means(df['sample'].unique())
 drug_means = get_means(df['drug'].unique())
 sample_list, drug_list, obs_list = format_for_model(df, vol_name)
@@ -83,14 +84,5 @@ mcmc.run(sample_list, drug_list, obs_list, sample_means, drug_means)
 
 mcmc_samples = {k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
 
-fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-
-sns.histplot(mcmc_samples['HCI-015'], ax=axes[0])
-axes[0].set_xlabel('HCI-015')
-
-sns.histplot(mcmc_samples['Navitoclax'], ax=axes[1])
-axes[1].set_xlabel('Navitoclax')
-
-sns.histplot(mcmc_samples['Vehicle'], ax=axes[2])
-axes[2].set_xlabel('Vehicle')
-plt.savefig(write_dir + '/model_stats.png')
+with open(write_dir + '/mcmc_samples.pkl', 'wb') as handle:
+    pickle.dump(mcmc_samples, handle)
