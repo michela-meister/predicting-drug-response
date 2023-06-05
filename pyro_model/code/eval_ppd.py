@@ -83,7 +83,7 @@ def create_text(x, name, n_rounds, lo, hi):
     std = np.std(x)
     count = len(x)
     if name == 'r_squared':
-        title = 'R^2 values: N = ' + str(n_rounds)
+        title = 'r^2 values: N = ' + str(n_rounds)
     elif name == 'in_bounds':
         title = 'Fraction of emp. observations w/in ' + str(100 * lo) + 'th to ' + str(100 * hi) + 'th percentiles.\nN = ' + str(n_rounds)
     else:
@@ -123,6 +123,5 @@ test_df = test_df.rename(columns = {'log(V_V0)_obs': 'log(V_V0)'})
 pairs = get_sample_drug_pairs(test_df)
 
 r_sq_list, in_bds_list = run_rounds(test_df, pairs, mcmc_samples, n_rounds, n_synth)
-print(write_dir)
 plot_histogram(write_dir + '/r_squared.png', r_sq_list, 'r_squared', nbins, n_rounds, lo, hi)
 plot_histogram(write_dir + '/in_bounds.png', in_bds_list, 'in_bounds', nbins, n_rounds, lo, hi)
