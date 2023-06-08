@@ -1,9 +1,13 @@
 #!/bin/bash
-run_dir=results/"$(date +"%Y-%m-%d")"/run_model
-eval_dir=results/"$(date +"%Y-%m-%d")"/eval_model
+day_dir=results/"$(date +"%Y-%m-%d")"
+run_dir=$day_dir/run_model
+eval_dir=$day_dir/eval_model
+split_dir=$day_dir'/clean_and_split_data/split'
 
+mkdir -p $day_dir
 mkdir -p $run_dir
 mkdir -p $eval_dir
+mkdir -p $split_dir
 
-python3 code/fit_model.py read_fn='results/2023-06-05/clean_and_split_data/split/train.pkl' write_dir=$run_dir
-python3 code/eval_ppd.py samples_fn='results/2023-06-05/run_model/mcmc_samples.pkl' test_fn='results/2023-05-31/clean_and_split_data/split/test.pkl' write_dir=$eval_dir
+python3 code/fit_model.py train_fn=$split_dir'/train.pkl' sample_fn=$split_dir'/sample_dict.pkl' drug_fn=$split_dir'/drug_dict.pkl' write_dir=$run_dir
+python3 code/evaluate_model.py mcmc_samples_fn=$run_dir'/mcmc_samples.pkl' test_fn=$split_dir'/test.pkl' write_dir=$eval_dir

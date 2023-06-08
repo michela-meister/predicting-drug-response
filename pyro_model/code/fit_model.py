@@ -14,74 +14,87 @@ import graphviz
 import pyro.distributions as dist
 import pyro.distributions.constraints as constraints
 
-# Returns list of normally-distributed variables with means from dictionary d and constant variance "variance"
-def normal_variables_from_dict(d, variance):
-    var_dict = {}
-    for key in d.keys():
-        var_dict[key] = pyro.sample(key, dist.Normal(d[key], variance))
-    return var_dict
+NUM_ARGS = 5
+A_SIGMA_INIT = 5
+G_ALPHA_INIT = 10
+G_BETA_INIT = 2
 
-def model(sample_list, drug_list, obs_list, sample_means, drug_means):
-    num_observations = len(obs_list)
-    assert len(sample_list) == num_observations
-    assert len(drug_list) == num_observations
-    # create variables for each sample and drug
-    samples = normal_variables_from_dict(sample_means, 1)
-    drugs = normal_variables_from_dict(drug_means, 1)
-    # create variable for each (sample, drug) pair observed
-    sigma = pyro.param("sigma", lambda: torch.ones(()), constraint=constraints.positive)
-    for i in pyro.plate("data", num_observations):
-        name = sample_list[i] + '_' + drug_list[i]
-        mean = samples[sample_list[i]] * drugs[drug_list[i]]
-        pyro.sample(name, dist.Normal(mean, sigma), obs=obs_list[i])
+def read_pickle(fn):
+    with open(fn, 'rb') as handle:
+        obj = pickle.load(handle)
+    return obj
+    
+def get_model_inputs(train_fn, sample_fn, drug_fn):
+    df = pd.read_pickle(train_fn)
+    sample_dict = read_pickle(sample_fn)
+    drug_dict = read_pickle(drug_fn)
+    n_samp = len(sample_dict.keys())
+    n_drug = len(drug_dict.keys())
+    s_idx = df['s_idx'].to_numpy()
+    d_idx = df['d_idx'].to_numpy()
+    obs = torch.Tensor(df['log(V_V0)'])
+    return n_samp, n_drug, s_idx, d_idx, obs
 
-# given dataframe with columns 'sample', 'drug', and 'log(V_V0)_obs', return lists to pass to model
-def format_for_model(d, vol_name):
-    sample_list = list(d['sample'])
-    drug_list = list(d['drug'])
-    obs_list = []
-    for obs in d[vol_name]:
-        obs_list.append(torch.Tensor(obs))
-    return sample_list, drug_list, obs_list
+# n_samp: number of samples
+# n_drug: number of drugs
+# obs: torch.Tensor of observations
+# s_idx: numpy array where s_idx[i] is the index of the sample for the i-th observation
+# d_idx: numpy array where d_idx[i] is the index of the drug for the i-th observation
+def model(n_samp, n_drug, s_idx, d_idx, obs):
+    # create global offset
+    a_sigma = pyro.param('a_sigma', torch.Tensor([A_SIGMA_INIT]), constraint=constraints.positive)
+    a = pyro.sample('a', dist.Normal(torch.zeros(()), a_sigma * torch.ones(())))   
+    # create s_sigma
+    s_g_alpha = pyro.param('s_g_alpha', torch.Tensor([G_ALPHA_INIT]), constraint=constraints.positive)
+    s_g_beta = pyro.param('s_g_beta', torch.Tensor([G_BETA_INIT]), constraint=constraints.positive)
+    with pyro.plate('s_sigma_plate', n_samp):
+        s_sigma = pyro.param('s_sigma', dist.Gamma(s_g_alpha * torch.ones(n_samp), s_g_beta * torch.ones(n_samp)),
+                             constraint=constraints.positive)
+    # create s
+    a_s_sigma = pyro.param('a_s_sigma', torch.Tensor([A_SIGMA_INIT]), constraint=constraints.positive)
+    with pyro.plate('s_plate', n_samp):
+        a_s = pyro.sample('a_s', dist.Normal(torch.zeros(n_samp), a_s_sigma * torch.ones(n_samp)))
+        s = pyro.sample('s', dist.Normal(torch.zeros(n_samp), s_sigma))
+    # create d_sigma
+    d_g_alpha = pyro.param('d_g_alpha', torch.Tensor([G_ALPHA_INIT]), constraint=constraints.positive)
+    d_g_beta = pyro.param('d_g_beta', torch.Tensor([G_BETA_INIT]), constraint=constraints.positive)
+    with pyro.plate('d_sigma_plate', n_drug):
+        d_sigma = pyro.param('d_sigma', dist.Gamma(d_g_alpha * torch.ones(n_drug), d_g_beta * torch.ones(n_drug)), 
+                              constraint=constraints.positive)
+    # create d
+    a_d_sigma = pyro.param('a_d_sigma', torch.Tensor([A_SIGMA_INIT]), constraint=constraints.positive)
+    with pyro.plate('d_plate', n_drug):
+        a_d = pyro.sample('a_d', dist.Normal(torch.zeros(n_drug), a_d_sigma * torch.ones(n_drug)))
+        d = pyro.sample('d', dist.Normal(torch.zeros(n_drug), d_sigma))
+    # create data
+    mean = s[s_idx] * d[d_idx] + a_s[s_idx] + a_d[d_idx] + a
+    with pyro.plate('data_plate', obs.shape[0]):
+        pyro.sample('data', dist.Normal(mean, 1), obs=obs)
 
-def get_means(var_list):
-    means = {}
-    for v in var_list:
-        means[v] = 0
-    return means
-
-NUM_ARGS = 3
 n = len(sys.argv)
 if n != NUM_ARGS:
     print("Error: " + str(NUM_ARGS) + " arguments needed; only " + str(n) + " arguments given.")
-read_fn = sys.argv[1].split("=")[1]
-write_dir = sys.argv[2].split("=")[1]
-
+train_fn = sys.argv[1].split("=")[1]
+sample_fn = sys.argv[2].split("=")[1]
+drug_fn = sys.argv[3].split("=")[1]
+write_dir = sys.argv[4].split("=")[1]
 
 smoke_test = ('CI' in os.environ)
 assert pyro.__version__.startswith('1.8.4')
-
 pyro.enable_validation(True)
 logging.basicConfig(format='%(message)s', level=logging.INFO)
 
 # Set matplotlib settings
 plt.style.use('default')
 
-df = pd.read_pickle(read_fn)
-vol_name = 'log(V_V0)_obs'
-sample_means = get_means(df['sample'].unique())
-drug_means = get_means(df['drug'].unique())
-sample_list, drug_list, obs_list = format_for_model(df, vol_name)
-pyro.render_model(model, 
-	model_args=(sample_list, drug_list, obs_list, sample_means, drug_means), 
-	render_distributions=True, 
-	filename=write_dir + '/model_diagram.png')
+n_samp, n_drug, s_idx, d_idx, obs = get_model_inputs(train_fn, sample_fn, drug_fn)
+pyro.render_model(model, model_args=(n_samp, n_drug, s_idx, d_idx, obs), render_params=True, 
+                  render_distributions=True, filename=write_dir + '/model_diagram.png')
 pyro.clear_param_store()
 kernel = pyro.infer.mcmc.NUTS(model, jit_compile=True)
 mcmc = pyro.infer.MCMC(kernel, num_samples=500, warmup_steps=500)
-mcmc.run(sample_list, drug_list, obs_list, sample_means, drug_means)
-
+mcmc.run(n_samp, n_drug, s_idx, d_idx, obs)
 mcmc_samples = {k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
-
+# write mcmc samples to file
 with open(write_dir + '/mcmc_samples.pkl', 'wb') as handle:
     pickle.dump(mcmc_samples, handle)

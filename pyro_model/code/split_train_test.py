@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pickle
 import sys
 
 FRACTION_TRAIN = .75
@@ -87,6 +88,30 @@ def group_observations(df, vol_name):
     sd = sd.merge(mid_list, on=['sample', 'drug'], validate='one_to_one')
     return sd
 
+def index_dict(elems):
+    d = {}
+    for elt in elems:
+        if elt not in d.keys():
+            d[elt] = len(d.keys())
+    return d
+
+# TODO: move to split / save side, since want train and test formatted the same way!
+def format_cols(df):
+    df = df[['sample', 'drug', 'log(V_V0)_obs']]
+    df = df.explode('log(V_V0)_obs').reset_index(drop=True)
+    df = df.rename(columns={'log(V_V0)_obs': 'log(V_V0)'})
+    return df
+
+def format_for_model(df, sample_dict, drug_dict):
+    df = format_cols(df)
+    df['s_idx'] = df['sample'].map(sample_dict)
+    df['d_idx'] = df['drug'].map(drug_dict)
+    return df
+
+def write_to_pickle(obj, fn):
+    with open(fn, 'wb') as handle:
+        pickle.dump(obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 NUM_ARGS = 3
 n = len(sys.argv)
 if n != NUM_ARGS:
@@ -102,5 +127,13 @@ vol_name = 'log(V_V0)'
 df = group_observations(df, vol_name)
 train, test = split_data(df, vol_name)
 validate_split(train, test, df)
+# format train, test for model
+sample_dict = index_dict(list(df['sample'].unique()))
+drug_dict = index_dict(list(df['drug'].unique()))
+train = format_for_model(train, sample_dict, drug_dict)
+test = format_for_model(test, sample_dict, drug_dict)
 train.to_pickle(write_dir + '/train.pkl')
 test.to_pickle(write_dir + '/test.pkl')
+write_to_pickle(sample_dict, write_dir + '/sample_dict.pkl')
+write_to_pickle(drug_dict, write_dir + '/drug_dict.pkl')
+

@@ -1,5 +1,6 @@
 #!/bin/bash
-base_dir=results/"$(date +"%Y-%m-%d")"/clean_and_split_data
+day_dir=results/"$(date +"%Y-%m-%d")"
+base_dir=$day_dir/clean_and_split_data
 
 mkdir -p $base_dir
 mkdir -p $base_dir/split
