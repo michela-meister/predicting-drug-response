@@ -48,25 +48,23 @@ def evaluation_fig(fn, r_sq, fracs, lo, hi, nbins):
 	plot_histogram(fn, title, fracs, nbins)
 
 # function to compute coverage
-def coverage(mu, test, n_synth, hi, lo):
+def coverage(mu, obs, hi, lo):
     # generate synthetic samples from normal distribution with mean mu
     m = mu.shape[0]
     n = mu.shape[1]
-    mean = np.tile(mu, (n_synth, 1, 1))
-    synth = mean + np.random.normal(loc=0, scale=1, size=(n_synth, m, n))
-    # sort along synthetic axis
+    # generate synthetic samples for each observation
+    synth = mu + np.random.normal(loc=0, scale=1, size=(m, n))
+    # sort synthetic samples for each observation
     sorted_synth = np.sort(synth, axis=0)
     # compute hi and lo index
-    lo_idx = int(np.ceil(lo * n_synth))
-    hi_idx = int(np.floor(hi * n_synth))
+    lo_idx = int(np.ceil(lo * m))
+    hi_idx = int(np.floor(hi * m))
     # get synthetic samples at hi and lo indices
-    lo_bound = sorted_synth[lo_idx, :, :]
-    hi_bound = sorted_synth[hi_idx, :, :]
-    # is test in [hi, lo]?
-    tiled_test = np.tile(test, (m, 1))
-    fracs = np.sum((lo_bound < tiled_test) & (tiled_test < hi_bound), axis=1) / (1.0 * len(test))
-    assert fracs.shape[0] == mu.shape[0]
-    return fracs
+    lo_bound = sorted_synth[lo_idx, :]
+    hi_bound = sorted_synth[hi_idx, :]
+    # is obs in [hi, lo]?
+    frac = np.sum(np.logical_and(lo_bound < obs, obs < hi_bound) / (1.0 * len(obs)))
+    return frac
 
 n = len(sys.argv)
 if n != NUM_ARGS:
@@ -89,6 +87,8 @@ s_test_idx = test_df['s_idx'].to_numpy()
 d_test_idx = test_df['d_idx'].to_numpy()
 mu = predict(mcmc_samples, s_test_idx, d_test_idx)
 r_sq = r_squared(mu, test)
-fracs = coverage(mu, test, N_SYNTH, HI, LO)
-evaluation_fig(write_dir + '/eval.png', r_sq, fracs, LO, HI, NBINS)
+fracs = coverage(mu, test, HI, LO)
+print("fracs: " + str(fracs))
+print("r_sq: " + str(r_sq))
+#evaluation_fig(write_dir + '/eval.png', r_sq, fracs, LO, HI, NBINS)
 
