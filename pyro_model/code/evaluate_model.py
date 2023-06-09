@@ -27,6 +27,7 @@ def predict(mcmc_samples, s_test_idx, d_test_idx):
     m = s.shape[0]
     mu = np.multiply(s[0:m, s_test_idx], d[0:m, d_test_idx]) + a_s[0:m, s_test_idx] + a_d[0:m, d_test_idx] + a
     assert (mu.shape[0] == m) and (mu.shape[1] == n)
+    assert (sigma.shape[0] == m) and (sigma.shape[1] == 1)
     return mu, sigma
 
 def r_squared(mu, test):
@@ -43,7 +44,7 @@ def coverage(mu, sigma, obs, hi, lo):
     n = mu.shape[1]
     # generate synthetic samples for each observation
     # TODO: Figure out how to get correct variance in here
-    synth = mu + np.random.normal(loc=0, scale=1, size=(m, n))
+    synth = mu + sigma * np.random.normal(loc=0, scale=1, size=(m, n))
     # sort synthetic samples for each observation
     sorted_synth = np.sort(synth, axis=0)
     # compute hi and lo index
