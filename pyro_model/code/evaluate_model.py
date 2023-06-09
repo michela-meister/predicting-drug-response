@@ -22,11 +22,12 @@ def predict(mcmc_samples, s_test_idx, d_test_idx):
     a = np.array(mcmc_samples['a'])
     a_s = np.array(mcmc_samples['a_s'])
     a_d = np.array(mcmc_samples['a_d'])
+    sigma = np.array(mcmc_samples['sigma'])
     # combine above matrices to create mu
     m = s.shape[0]
     mu = np.multiply(s[0:m, s_test_idx], d[0:m, d_test_idx]) + a_s[0:m, s_test_idx] + a_d[0:m, d_test_idx] + a
     assert (mu.shape[0] == m) and (mu.shape[1] == n)
-    return mu
+    return mu, sigma
 
 def r_squared(mu, test):
     means = np.mean(mu, axis=0)
@@ -35,24 +36,13 @@ def r_squared(mu, test):
     r = pearson_corr[0, 1]
     return np.power(r, 2)
 
-def plot_histogram(fn, title, x, nbins):
-    fig = plt.figure()
-    sns.histplot(x, stat='density', bins=nbins)
-    plt.title(title)
-    plt.savefig(fn, bbox_inches='tight')
-    plt.clf()
-    plt.close()
-
-def evaluation_fig(fn, r_sq, fracs, lo, hi, nbins):
-	title = 'Fraction of observations w/in ' + str(100 * lo) + 'th to ' + str(100 * hi) + 'th percentiles.\nN = ' + str(len(fracs)) + ', r^2 = ' + '{:.2f}'.format(r_sq)
-	plot_histogram(fn, title, fracs, nbins)
-
 # function to compute coverage
-def coverage(mu, obs, hi, lo):
+def coverage(mu, sigma, obs, hi, lo):
     # generate synthetic samples from normal distribution with mean mu
     m = mu.shape[0]
     n = mu.shape[1]
     # generate synthetic samples for each observation
+    # TODO: Figure out how to get correct variance in here
     synth = mu + np.random.normal(loc=0, scale=1, size=(m, n))
     # sort synthetic samples for each observation
     sorted_synth = np.sort(synth, axis=0)
@@ -77,7 +67,7 @@ write_dir = sys.argv[3].split("=")[1]
 with open(mcmc_samples_fn, 'rb') as handle:
     mcmc_samples = pickle.load(handle)
     
-# reach in test data
+# read in test data
 with open(test_fn, 'rb') as handle:
     test_df = pickle.load(handle)
 
@@ -85,10 +75,9 @@ test = test_df['log(V_V0)'].to_numpy(dtype=float)
 # get mcmc_samples, s_test_idx, d_test_idx
 s_test_idx = test_df['s_idx'].to_numpy()
 d_test_idx = test_df['d_idx'].to_numpy()
-mu = predict(mcmc_samples, s_test_idx, d_test_idx)
+mu, sigma = predict(mcmc_samples, s_test_idx, d_test_idx)
 r_sq = r_squared(mu, test)
-fracs = coverage(mu, test, HI, LO)
+fracs = coverage(mu, sigma, test, HI, LO)
 print("fracs: " + str(fracs))
 print("r_sq: " + str(r_sq))
-#evaluation_fig(write_dir + '/eval.png', r_sq, fracs, LO, HI, NBINS)
 

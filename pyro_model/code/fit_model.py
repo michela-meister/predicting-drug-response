@@ -68,8 +68,11 @@ def model(n_samp, n_drug, s_idx, d_idx, obs):
         d = pyro.sample('d', dist.Normal(torch.zeros(n_drug), d_sigma))
     # create data
     mean = s[s_idx] * d[d_idx] + a_s[s_idx] + a_d[d_idx] + a
+    sigma_g_alpha = pyro.param('sigma_g_alpha', torch.Tensor([2]), constraint=constraints.positive)
+    sigma_g_beta = pyro.param('sigma_g_beta', torch.Tensor([1]), constraint=constraints.positive)
+    sigma = pyro.sample('sigma', dist.Gamma(sigma_g_alpha, sigma_g_beta))
     with pyro.plate('data_plate', obs.shape[0]):
-        pyro.sample('data', dist.Normal(mean, 1), obs=obs)
+        pyro.sample('data', dist.Normal(mean, sigma * torch.ones(obs.shape[0])), obs=obs)
 
 n = len(sys.argv)
 if n != NUM_ARGS:
