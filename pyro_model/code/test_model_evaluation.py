@@ -9,8 +9,8 @@ from scipy import stats
 import pyro.distributions as dist
 import pyro.distributions.constraints as constraints
 
-from fit_model import read_pickle, get_model_inputs, model
-from evaluate_model import predict, r_squared, coverage
+from fit_model_helpers import read_pickle, get_model_inputs, model
+from evaluate_model_helpers import predict, r_squared, coverage
 
 NUM_ARGS = 5
 A_SIGMA_INIT = 5
@@ -38,16 +38,16 @@ total_obs = n_train + n_test
 s_indices = np.concatenate((s_idx, s_test_idx))
 d_indices = np.concatenate((d_idx, d_test_idx))
 obs = model(n_samp, n_drug, s_indices, d_indices, n_obs=total_obs)
-obs_train = obs[0:n_train]
-obs_test = obs[n_train:]
-# fit model
+obs_train = torch.Tensor(obs.detach().numpy()[0:n_train])
+obs_test = obs.detach().numpy()[n_train:]
+#fit model
 pyro.clear_param_store()
 kernel = pyro.infer.mcmc.NUTS(model, jit_compile=True)
 mcmc = pyro.infer.MCMC(kernel, num_samples=500, warmup_steps=500)
-mcmc.run(n_samp, n_drug, s_idx, d_idx, obs=obs_train, n_obs=obs_train.shape[0])
+mcmc.run(n_samp, n_drug, s_idx, d_idx, obs=obs_train, n_obs=n_train)
 mcmc_samples = {k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
 # evaluate model
-test = obs_test.numpy()
+test = obs_test
 mu, sigma = predict(mcmc_samples, s_test_idx, d_test_idx)
 r_sq = r_squared(mu, test)
 fracs = coverage(mu, sigma, test, HI, LO)
