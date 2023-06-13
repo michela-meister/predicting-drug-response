@@ -42,7 +42,9 @@ def get_model_inputs(train_fn, sample_fn, drug_fn):
 # obs: torch.Tensor of observations
 # s_idx: numpy array where s_idx[i] is the index of the sample for the i-th observation
 # d_idx: numpy array where d_idx[i] is the index of the drug for the i-th observation
-def model(n_samp, n_drug, s_idx, d_idx, obs):
+def model(n_samp, n_drug, s_idx, d_idx, obs=None, n_obs=None):
+    if n_obs == None:
+        n_obs = obs.shape[0]
     # create global offset
     a_sigma = pyro.param('a_sigma', torch.Tensor([A_SIGMA_INIT]), constraint=constraints.positive)
     a = pyro.sample('a', dist.Normal(torch.zeros(()), a_sigma * torch.ones(())))   
@@ -67,8 +69,8 @@ def model(n_samp, n_drug, s_idx, d_idx, obs):
     sigma_g_alpha = pyro.param('sigma_g_alpha', torch.Tensor([ALPHA_INIT]), constraint=constraints.positive)
     sigma_g_beta = pyro.param('sigma_g_beta', torch.Tensor([BETA_INIT]), constraint=constraints.positive)
     sigma = pyro.sample('sigma', dist.Gamma(sigma_g_alpha, sigma_g_beta))
-    with pyro.plate('data_plate', obs.shape[0]):
-        pyro.sample('data', dist.Normal(mean, sigma * torch.ones(obs.shape[0])), obs=obs)
+    with pyro.plate('data_plate', n_obs):
+        pyro.sample('data', dist.Normal(mean, sigma * torch.ones(n_obs)), obs=obs)
 
 n = len(sys.argv)
 if n != NUM_ARGS:
@@ -87,12 +89,13 @@ logging.basicConfig(format='%(message)s', level=logging.INFO)
 plt.style.use('default')
 
 n_samp, n_drug, s_idx, d_idx, obs = get_model_inputs(train_fn, sample_fn, drug_fn)
-pyro.render_model(model, model_args=(n_samp, n_drug, s_idx, d_idx, obs), render_params=True, 
+n_obs = obs.shape[0]
+pyro.render_model(model, model_args=(n_samp, n_drug, s_idx, d_idx, obs, n_obs), render_params=True, 
                   render_distributions=True, filename=write_dir + '/model_diagram.png')
 pyro.clear_param_store()
 kernel = pyro.infer.mcmc.NUTS(model, jit_compile=True)
 mcmc = pyro.infer.MCMC(kernel, num_samples=500, warmup_steps=500)
-mcmc.run(n_samp, n_drug, s_idx, d_idx, obs)
+mcmc.run(n_samp, n_drug, s_idx, d_idx, obs, n_obs)
 mcmc_samples = {k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
 # write mcmc samples to file
 with open(write_dir + '/mcmc_samples.pkl', 'wb') as handle:
