@@ -14,15 +14,12 @@ import graphviz
 import pyro.distributions as dist
 import pyro.distributions.constraints as constraints
 
-def read_pickle(fn):
-    with open(fn, 'rb') as handle:
-        obj = pickle.load(handle)
-    return obj
+import helpers
     
 def get_model_inputs(train_fn, sample_fn, drug_fn):
     df = pd.read_pickle(train_fn)
-    sample_dict = read_pickle(sample_fn)
-    drug_dict = read_pickle(drug_fn)
+    sample_dict = helpers.read_pickle(sample_fn)
+    drug_dict = helpers.read_pickle(drug_fn)
     n_samp = len(sample_dict.keys())
     n_drug = len(drug_dict.keys())
     s_idx = df['s_idx'].to_numpy()

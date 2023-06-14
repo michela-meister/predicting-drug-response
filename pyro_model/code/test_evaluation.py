@@ -1,5 +1,7 @@
+import matplotlib.pyplot as plt
 import numpy as np 
 import pyro
+import seaborn as sns
 import sys
 import torch
 
@@ -75,27 +77,58 @@ def fit_to_model(n_samp, n_drug, s_idx, d_idx, params, obs_train, n_mcmc, n_warm
 	mcmc_samples = {k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
 	return mcmc_samples
 
+def fit_to_model_with_thinning(n_samp, n_drug, s_idx, d_idx, params, obs_train, n_mcmc, n_warmup, n_thin):
+	# n_samp is the number of samples desired
+	# n_thin is the thinning
+	prev_sample = None
+	d = {}
+	for i in range(n_samp):
+		mcmc.run(n_samp, n_drug, s_idx, d_idx, params, obs=obs_train, n_obs=n_train, initial_params=prev_sample)
+		mcmc_samples = {k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
+		sample = get_final_sample(mcmc_samples)
+		append_sample(d, sample)
+		prev_sample = sample
+	# read in n_thin samples
+	# save the last sample
+	# initialize the next run with this saved sample
+
 def evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, hi, lo):
 	mu, sigma = evaluate.predict(mcmc_samples, s_test_idx, d_test_idx)
 	r_sq = evaluate.r_squared(mu, obs_test)
 	coverage = evaluate.coverage(mu, sigma, obs_test, hi, lo)
 	return r_sq, coverage
 
-def histogram_r_sq(r_sq_fn):
+def histogram_r_sq(r_sq_fn, write_fn):
 	r_sq_list = np.loadtxt(r_sq_fn)
-	print('r_sq_list: ')
-	print(r_sq_list)
+	fig = plt.figure()
+	sns.histplot(r_sq_list)
+	plt.title('r-squared values')
+	plt.savefig(write_fn, bbox_inches='tight')
+	plt.clf()
+	plt.close()
 
-def histogram_coverage(cov_fn):
+def histogram_coverage(cov_fn, write_fn):
 	cov_list = np.loadtxt(cov_fn)
-	print('cov_list: ')
-	print(cov_list)
+	fig = plt.figure()
+	sns.histplot(cov_list)
+	plt.title('coverage')
+	plt.savefig(write_fn, bbox_inches='tight')
+	plt.clf()
+	plt.close()
+
+def save_args(args):
+	train_fn, test_fn, sample_fn, drug_fn = files_from_args(args)
+	n_total_obs, n_mcmc, n_warmup, n_iter, directory = params_from_args(sys.argv)
+	input_args = {'train_fn': train_fn, 'test_fn': test_fn, 'sample_fn': sample_fn, 'drug_fn': drug_fn, 
+	    'n_total_obs': n_total_obs, 'n_mcmc': n_mcmc, 'n_warmup': n_warmup, 'n_iter': n_iter, 'directory': directory}
+	helpers.write_to_pickle(input_args, directory + '/input_args.pkl')
 
 def main():
 	helpers.check_args(sys.argv, 10)
+	save_args(sys.argv)
 	n_total_obs, n_mcmc, n_warmup, n_iter, directory = params_from_args(sys.argv)
 	r_sq_fn = directory + '/r_squared.txt'
-	cov_fn = directory + 'coverage.txt'
+	cov_fn = directory + '/coverage.txt'
 	r_sq_list = []
 	cov_list = []
 	for seed in range(n_iter):
@@ -110,8 +143,14 @@ def main():
 		cov_list.append(cov)
 		np.savetxt(r_sq_fn, np.array(r_sq_list))
 		np.savetxt(cov_fn, np.array(cov_list))
-	histogram_r_sq(r_sq_fn)
-	histogram_coverage(cov_fn)
+	print('r-squared:')
+	print(r_sq_list)
+	print('coverage:')
+	print(cov_list)
+	r_sq_plot_fn = directory + '/r_squared_plot.png'
+	cov_plot_fn = directory + '/coverage_plot.png'
+	histogram_r_sq(r_sq_fn, r_sq_plot_fn)
+	histogram_coverage(cov_fn, cov_plot_fn)
 
 if __name__ == "__main__":
     main()

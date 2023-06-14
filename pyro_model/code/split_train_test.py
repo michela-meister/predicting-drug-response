@@ -4,6 +4,7 @@ import pickle
 import sys
 
 import global_constants as const 
+import helpers
 
 def candidate_split(df, ntrain):
     # Collapse Fulvestrant drugs
@@ -108,10 +109,6 @@ def format_for_model(df, sample_dict, drug_dict):
     df['d_idx'] = df['drug'].map(drug_dict)
     return df
 
-def write_to_pickle(obj, fn):
-    with open(fn, 'wb') as handle:
-        pickle.dump(obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
 NUM_ARGS = 3
 n = len(sys.argv)
 if n != NUM_ARGS:
@@ -134,6 +131,6 @@ train = format_for_model(train, sample_dict, drug_dict)
 test = format_for_model(test, sample_dict, drug_dict)
 train.to_pickle(write_dir + '/train.pkl')
 test.to_pickle(write_dir + '/test.pkl')
-write_to_pickle(sample_dict, write_dir + '/sample_dict.pkl')
-write_to_pickle(drug_dict, write_dir + '/drug_dict.pkl')
+helpers.write_to_pickle(sample_dict, write_dir + '/sample_dict.pkl')
+helpers.write_to_pickle(drug_dict, write_dir + '/drug_dict.pkl')
 
