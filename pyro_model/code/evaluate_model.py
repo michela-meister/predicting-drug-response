@@ -6,10 +6,9 @@ import seaborn as sns
 import sys
 
 from scipy import stats
-from evaluate_model_helpers import predict, r_squared, coverage
+import global_constants as const
+import eval_helpers as evaluate
 
-LO = .05
-HI = .95
 NUM_ARGS = 4
 
 n = len(sys.argv)
@@ -31,9 +30,9 @@ test = test_df['log(V_V0)'].to_numpy(dtype=float)
 # get mcmc_samples, s_test_idx, d_test_idx
 s_test_idx = test_df['s_idx'].to_numpy()
 d_test_idx = test_df['d_idx'].to_numpy()
-mu, sigma = predict(mcmc_samples, s_test_idx, d_test_idx)
-r_sq = r_squared(mu, test)
-fracs = coverage(mu, sigma, test, HI, LO)
+mu, sigma = evaluate.predict(mcmc_samples, s_test_idx, d_test_idx)
+r_sq = evaluate.r_squared(mu, test)
+fracs = evaluate.coverage(mu, sigma, test, const.HI, const.LO)
 print("fracs: " + str(fracs))
 print("r_sq: " + str(r_sq))
 

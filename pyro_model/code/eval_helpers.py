@@ -7,8 +7,6 @@ import sys
 
 from scipy import stats
 
-NBINS = 20
-
 def predict(mcmc_samples, s_test_idx, d_test_idx):
     assert len(s_test_idx) == len(d_test_idx)
     n = len(s_test_idx)
@@ -39,7 +37,6 @@ def coverage(mu, sigma, obs, hi, lo):
     m = mu.shape[0]
     n = mu.shape[1]
     # generate synthetic samples for each observation
-    # TODO: Figure out how to get correct variance in here
     synth = mu + sigma * np.random.normal(loc=0, scale=1, size=(m, n))
     # sort synthetic samples for each observation
     sorted_synth = np.sort(synth, axis=0)

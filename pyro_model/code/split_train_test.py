@@ -3,7 +3,7 @@ import pandas as pd
 import pickle
 import sys
 
-FRACTION_TRAIN = .75
+import global_constants as const 
 
 def candidate_split(df, ntrain):
     # Collapse Fulvestrant drugs
@@ -125,7 +125,7 @@ df = df[['Sample', 'Drug', 'log(V_V0)', 'MID']]
 df = df.rename(columns={'Sample': 'sample', 'Drug': 'drug'})
 vol_name = 'log(V_V0)'
 df = group_observations(df, vol_name)
-train, test = split_data(df, vol_name, FRACTION_TRAIN)
+train, test = split_data(df, vol_name, const.FRACTION_TRAIN)
 validate_split(train, test, df)
 # format train, test for model
 sample_dict = index_dict(list(df['sample'].unique()))
