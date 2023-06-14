@@ -77,20 +77,28 @@ def fit_to_model(n_samp, n_drug, s_idx, d_idx, params, obs_train, n_mcmc, n_warm
 	mcmc_samples = {k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
 	return mcmc_samples
 
+def append_sample_to_dict(d, s):
+	# d is a dictionary of numpy arrays
+	# for each key, get the array, and append to the array
+	for key in d.keys():
+		np.append(d[key], s[key])
+	return d
+
 def fit_to_model_with_thinning(n_samp, n_drug, s_idx, d_idx, params, obs_train, n_mcmc, n_warmup, n_thin):
 	# n_samp is the number of samples desired
 	# n_thin is the thinning
 	prev_sample = None
-	d = {}
+	thinned_samples = {}
 	for i in range(n_samp):
 		mcmc.run(n_samp, n_drug, s_idx, d_idx, params, obs=obs_train, n_obs=n_train, initial_params=prev_sample)
 		mcmc_samples = {k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
 		sample = get_final_sample(mcmc_samples)
-		append_sample(d, sample)
+		if i == 0:
+			thinned_samples = sample
+		else:
+			append_sample_to_dict(thinned_samples, sample)
 		prev_sample = sample
-	# read in n_thin samples
-	# save the last sample
-	# initialize the next run with this saved sample
+	return d
 
 def evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, hi, lo):
 	mu, sigma = evaluate.predict(mcmc_samples, s_test_idx, d_test_idx)
