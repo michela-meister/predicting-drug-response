@@ -39,9 +39,9 @@ def check_drugs(split, df):
             return False
     return True
 
-def split_pairs(df):
+def split_pairs(df, frac_train):
     npairs = len(df[['sample', 'drug']].drop_duplicates())
-    ntrain = int(np.floor(npairs * FRACTION_TRAIN))
+    ntrain = int(np.floor(npairs * frac_train))
     while True:
         split = candidate_split(df, ntrain)
         if check_subset(split) and check_drugs(split, df):
@@ -54,8 +54,8 @@ def split_data_by_pairs(df, pairs, vol_name):
                         validate='one_to_many')
     return pairs[['sample', 'drug', vol_name + '_obs', 'MID_list']]
 
-def split_data(df, vol_name):
-    train_pairs, test_pairs = split_pairs(df)
+def split_data(df, vol_name, frac_train):
+    train_pairs, test_pairs = split_pairs(df, frac_train)
     df['sample_drug_pair'] = df[['sample', 'drug']].apply(tuple, axis=1)
     train = split_data_by_pairs(df, train_pairs, vol_name)
     test = split_data_by_pairs(df, test_pairs, vol_name)
@@ -125,7 +125,7 @@ df = df[['Sample', 'Drug', 'log(V_V0)', 'MID']]
 df = df.rename(columns={'Sample': 'sample', 'Drug': 'drug'})
 vol_name = 'log(V_V0)'
 df = group_observations(df, vol_name)
-train, test = split_data(df, vol_name)
+train, test = split_data(df, vol_name, FRACTION_TRAIN)
 validate_split(train, test, df)
 # format train, test for model
 sample_dict = index_dict(list(df['sample'].unique()))

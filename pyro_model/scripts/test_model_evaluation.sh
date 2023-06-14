@@ -1,6 +1,6 @@
 #!/bin/bash
 day_dir=results/"$(date +"%Y-%m-%d")"
-base_dir=$day_dir/clean_and_split_data/split
+base_dir=results/2023-06-13/clean_and_split_data/split
 
 mkdir -p $day_dir
 mkdir -p $base_dir
