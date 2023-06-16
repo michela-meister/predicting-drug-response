@@ -9,6 +9,7 @@ import global_constants as const
 import helpers
 import model_helpers as modeling
 import eval_helpers as evaluate
+import split_helpers
 
 def files_from_args(args):
 	train_fn = args[1].split("=")[1]
@@ -59,8 +60,11 @@ def random_indexing(args, n_total_obs):
 	d_test_idx = d_indices[n_train:]
 	return n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx
 
-def get_real_data(args):
-	train_fn, test_fn, sample_fn, drug_fn = files_from_args(args)
+def get_real_data(directory):
+	train_fn = directory + '/train.pkl'
+	test_fn = directory + '/test.pkl'
+	sample_fn = directory + '/sample_dict.pkl'
+	drug_fn = directory + '/drug_dict.pkl'
 	n_samp, n_drug, s_idx, d_idx, obs_train = modeling.get_model_inputs(train_fn, sample_fn, drug_fn)
 	_, _, s_test_idx, d_test_idx, obs_test = modeling.get_model_inputs(test_fn, sample_fn, drug_fn)
 	obs_test = obs_test.detach().numpy()
@@ -232,9 +236,18 @@ def main_synth_data():
 	histogram_coverage(cov_fn, cov_plot_fn)
 
 def main_real_data():
-	helpers.check_args(sys.argv, 10)
-	save_args(sys.argv)
-	n_total_obs, n_mcmc, n_warmup, n_iter, directory = params_from_args(sys.argv)
+	args = sys.argv
+	helpers.check_args(args, 8)
+	#save_args(sys.argv)
+	# read in args
+	data_dir = args[1].split("=")[1]
+	n_total_obs = int(args[2].split("=")[1])
+	n_mcmc = int(args[3].split("=")[1])
+	n_warmup = int(args[4].split("=")[1])
+	n_iter = int(args[5].split("=")[1])
+	thinning = int(args[6].split("=")[1])
+	directory = args[7].split("=")[1]
+    # define file fns
 	r_sq_fn = directory + '/r_squared.txt'
 	cov_fn = directory + '/coverage.txt'
 	r_sq_list = []
@@ -242,8 +255,12 @@ def main_real_data():
 	for seed in range(n_iter):
 		pyro.set_rng_seed(seed)
 		pyro.clear_param_store()
-		# generate synthetic data
-		n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test = get_real_data(sys.argv)
+		# split dataset
+		data_fn = data_dir + '/welm_pdx_clean_mid_volume.csv'
+		split_dir = data_dir + '/split'
+		split_helpers.split_dataset(data_fn, split_dir)
+		# get real data
+		n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test = get_real_data(split_dir)
 		# fit model to synthetic data
 		mcmc_samples = get_mcmc_samples_with_simple_thinning(n_samp, n_drug, s_idx, d_idx, const.PARAMS, obs_train, n_mcmc, n_warmup, thinning=2)
 		# evaluate vs test set
@@ -395,4 +412,4 @@ def test_random_seed_with_generate_samples():
 if __name__ == "__main__":
     #main()
     main_real_data()
-    main_synth_data()
+    #main_synth_data()
