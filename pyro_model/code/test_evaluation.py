@@ -41,15 +41,13 @@ def generate_data(n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx):
 	assert obs_test.shape[0] == n_test
 	return obs_train, obs_test
 
-def dataset_indexing(args):
+def dataset_indexing(train_fn, test_fn, sample_fn, drug_fn):
 	train_fn, test_fn, sample_fn, drug_fn = files_from_args(args)
 	n_samp, n_drug, s_idx, d_idx, _ = modeling.get_model_inputs(train_fn, sample_fn, drug_fn)
 	_, _, s_test_idx, d_test_idx, _ = modeling.get_model_inputs(test_fn, sample_fn, drug_fn)
-	return n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx
+	return s_idx, d_idx, s_test_idx, d_test_idx
 
-def random_indexing(args, n_total_obs):
-	train_fn, test_fn, sample_fn, drug_fn = files_from_args(args)
-	n_samp, n_drug, _, _, _ = modeling.get_model_inputs(train_fn, sample_fn, drug_fn)
+def random_indexing(n_samp, n_drug, n_total_obs):
 	# generate sample, drug indices
 	s_indices = np.random.choice(range(n_samp), size=(n_total_obs,))
 	d_indices = np.random.choice(range(n_drug), size=(n_total_obs,))
@@ -58,7 +56,7 @@ def random_indexing(args, n_total_obs):
 	s_test_idx = s_indices[n_train:]
 	d_idx = d_indices[:n_train]
 	d_test_idx = d_indices[n_train:]
-	return n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx
+	return s_idx, d_idx, s_test_idx, d_test_idx
 
 def get_real_data(directory):
 	train_fn = directory + '/train.pkl'
@@ -70,12 +68,16 @@ def get_real_data(directory):
 	obs_test = obs_test.detach().numpy()
 	return n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test
 
-def get_synthetic_data(args, n_total_obs=None):
-	if n_total_obs is not None:
+def get_synthetic_data(directory, n_total_obs=None):
+	train_fn = directory + '/train.pkl'
+	test_fn = directory + '/test.pkl'
+	sample_fn = directory + '/sample_dict.pkl'
+	drug_fn = directory + '/drug_dict.pkl'
+	n_samp, n_drug, s_idx, d_idx, _ = modeling.get_model_inputs(train_fn, sample_fn, drug_fn)
+	_, _, s_test_idx, d_test_idx, _ = modeling.get_model_inputs(test_fn, sample_fn, drug_fn)
+	if n_total_obs != -1:
 		# generate n_total_obs number of samples, with randomly chosen s_idx, d_idx
-		n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx = random_indexing(args, n_total_obs)
-	else:
-		n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx = dataset_indexing(args)
+		s_idx, d_idx, s_test_idx, d_test_idx = random_indexing(n_samp, n_drug, n_total_obs)
 	obs_train, obs_test = generate_data(n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx)
 	return n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test
 
@@ -181,33 +183,54 @@ def evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, hi, lo):
 	coverage = evaluate.coverage(mu, sigma, obs_test, hi, lo)
 	return r_sq, coverage
 
-def histogram_r_sq(r_sq_fn, write_fn):
+def histogram_r_sq(r_sq_fn, write_fn, use_real_data):
+	prefix = 'Synthetic: '
+	if use_real_data:
+		prefix = 'Welm Data: '
 	r_sq_list = np.loadtxt(r_sq_fn)
 	fig = plt.figure()
 	sns.histplot(r_sq_list)
-	plt.title('r-squared values')
+	plt.title(prefix + 'r-squared values')
 	plt.savefig(write_fn, bbox_inches='tight')
 	plt.clf()
 	plt.close()
 
-def histogram_coverage(cov_fn, write_fn):
+def histogram_coverage(cov_fn, write_fn, use_real_data):
+	prefix = 'Synthetic: '
+	if use_real_data:
+		prefix = 'Welm Data: '
 	cov_list = np.loadtxt(cov_fn)
 	fig = plt.figure()
 	sns.histplot(cov_list)
-	plt.title('coverage')
+	plt.title(prefix + 'coverage')
 	plt.savefig(write_fn, bbox_inches='tight')
 	plt.clf()
 	plt.close()
 
-def save_args(args):
-	train_fn, test_fn, sample_fn, drug_fn = files_from_args(args)
-	n_total_obs, n_mcmc, n_warmup, n_iter, directory = params_from_args(sys.argv)
-	input_args = {'train_fn': train_fn, 'test_fn': test_fn, 'sample_fn': sample_fn, 'drug_fn': drug_fn, 
-	    'n_total_obs': n_total_obs, 'n_mcmc': n_mcmc, 'n_warmup': n_warmup, 'n_iter': n_iter, 'directory': directory}
+# def save_args(args):
+# 	train_fn, test_fn, sample_fn, drug_fn = files_from_args(args)
+# 	n_total_obs, n_mcmc, n_warmup, n_iter, directory = params_from_args(sys.argv)
+# 	input_args = {'train_fn': train_fn, 'test_fn': test_fn, 'sample_fn': sample_fn, 'drug_fn': drug_fn, 
+# 	    'n_total_obs': n_total_obs, 'n_mcmc': n_mcmc, 'n_warmup': n_warmup, 'n_iter': n_iter, 'directory': directory}
+# 	helpers.write_to_pickle(input_args, directory + '/input_args.pkl')
+
+# extracts and saves args
+def retrieve_args(args):
+	data_dir = args[1].split("=")[1]
+	n_total_obs = int(args[2].split("=")[1])
+	n_mcmc = int(args[3].split("=")[1])
+	n_warmup = int(args[4].split("=")[1])
+	n_iter = int(args[5].split("=")[1])
+	thinning = int(args[6].split("=")[1])
+	directory = args[7].split("=")[1]
+	use_real_data = bool(int(args[8].split("=")[1]))
+	input_args = {'data_dir': data_dir, 'n_total_obs': n_total_obs, 'n_mcmc': n_mcmc, 'n_warmpup': n_warmup, 'n_iter': n_iter, 'thining': thinning,
+	    'directory': directory, 'use_real_data': use_real_data}
 	helpers.write_to_pickle(input_args, directory + '/input_args.pkl')
+	return data_dir, n_total_obs, n_mcmc, n_warmup, n_iter, thinning, directory, use_real_data
 
 def main_synth_data():
-	helpers.check_args(sys.argv, 10)
+	helpers.check_args(sys.argv, 9)
 	save_args(sys.argv)
 	n_total_obs, n_mcmc, n_warmup, n_iter, directory = params_from_args(sys.argv)
 	r_sq_fn = directory + '/r_squared.txt'
@@ -235,23 +258,15 @@ def main_synth_data():
 	histogram_r_sq(r_sq_fn, r_sq_plot_fn)
 	histogram_coverage(cov_fn, cov_plot_fn)
 
-def main_real_data():
-	args = sys.argv
-	helpers.check_args(args, 8)
-	#save_args(sys.argv)
-	# read in args
-	data_dir = args[1].split("=")[1]
-	n_total_obs = int(args[2].split("=")[1])
-	n_mcmc = int(args[3].split("=")[1])
-	n_warmup = int(args[4].split("=")[1])
-	n_iter = int(args[5].split("=")[1])
-	thinning = int(args[6].split("=")[1])
-	directory = args[7].split("=")[1]
+def main():
+	helpers.check_args(sys.argv, 9)
+	data_dir, n_total_obs, n_mcmc, n_warmup, n_iter, thinning, directory, use_real_data = retrieve_args(sys.argv)
     # define file fns
 	r_sq_fn = directory + '/r_squared.txt'
 	cov_fn = directory + '/coverage.txt'
 	r_sq_list = []
 	cov_list = []
+	# decide whether to use real or synthetic data
 	for seed in range(n_iter):
 		pyro.set_rng_seed(seed)
 		pyro.clear_param_store()
@@ -259,10 +274,12 @@ def main_real_data():
 		data_fn = data_dir + '/welm_pdx_clean_mid_volume.csv'
 		split_dir = data_dir + '/split'
 		split_helpers.split_dataset(data_fn, split_dir)
-		# get real data
-		n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test = get_real_data(split_dir)
+		if use_real_data:
+			n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test = get_real_data(split_dir)
+		else:
+			n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test = get_synthetic_data(split_dir, n_total_obs)
 		# fit model to synthetic data
-		mcmc_samples = get_mcmc_samples_with_simple_thinning(n_samp, n_drug, s_idx, d_idx, const.PARAMS, obs_train, n_mcmc, n_warmup, thinning=2)
+		mcmc_samples = get_mcmc_samples_with_simple_thinning(n_samp, n_drug, s_idx, d_idx, const.PARAMS, obs_train, n_mcmc, n_warmup, thinning=thinning)
 		# evaluate vs test set
 		r_sq, cov = evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, const.HI, const.LO)
 		r_sq_list.append(r_sq)
@@ -275,8 +292,8 @@ def main_real_data():
 	print(cov_list)
 	r_sq_plot_fn = directory + '/r_squared_plot.png'
 	cov_plot_fn = directory + '/coverage_plot.png'
-	histogram_r_sq(r_sq_fn, r_sq_plot_fn)
-	histogram_coverage(cov_fn, cov_plot_fn)
+	histogram_r_sq(r_sq_fn, r_sq_plot_fn, use_real_data)
+	histogram_coverage(cov_fn, cov_plot_fn, use_real_data)
 
 def simply_get_mcmc_samples():
 	helpers.check_args(sys.argv, 10)
@@ -410,6 +427,5 @@ def test_random_seed_with_generate_samples():
 	print(obs_test2[0])
 
 if __name__ == "__main__":
-    #main()
-    main_real_data()
+	main()
     #main_synth_data()
