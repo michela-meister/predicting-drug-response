@@ -27,12 +27,47 @@ def get_model_inputs(train_fn, sample_fn, drug_fn):
     obs = torch.Tensor(df['log(V_V0)'])
     return n_samp, n_drug, s_idx, d_idx, obs
 
+def vectorized_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None, k=1):
+    print('VECTORIZED!')
+    print('K = ' + str(k))
+    if obs is None and n_obs is None:
+        print('Error!: both obs and n_obs are None.')
+    if obs is not None:
+        n_obs = obs.shape[0]
+    # create global offset
+    a_sigma = pyro.param('a_sigma', torch.Tensor([params['a_sigma_init']]), constraint=constraints.positive)
+    a = pyro.sample('a', dist.Normal(torch.zeros(()), a_sigma * torch.ones(())))   
+    # create s
+    s_g_alpha = pyro.param('s_g_alpha', torch.Tensor([params['g_alpha_init']]), constraint=constraints.positive)
+    s_g_beta = pyro.param('s_g_beta', torch.Tensor([params['g_beta_init']]), constraint=constraints.positive)
+    s_sigma = pyro.param('s_sigma', dist.Gamma(s_g_alpha, s_g_beta), constraint=constraints.positive)
+    with pyro.plate('s_plate', n_samp):
+        s = pyro.sample('s', dist.Normal(torch.zeros((k, n_samp)), s_sigma * torch.ones((k, n_samp))))
+    # create d
+    d_g_alpha = pyro.param('d_g_alpha', torch.Tensor([params['g_alpha_init']]), constraint=constraints.positive)
+    d_g_beta = pyro.param('d_g_beta', torch.Tensor([params['g_beta_init']]), constraint=constraints.positive)
+    d_sigma = pyro.param('d_sigma', dist.Gamma(d_g_alpha, d_g_beta), constraint=constraints.positive)
+    with pyro.plate('d_plate', n_drug):
+        d = pyro.sample('d', dist.Normal(torch.zeros((k, n_drug)), d_sigma * torch.ones((k, n_drug))))
+    # create data
+    # rank-k matrix
+    mat = torch.matmul(torch.transpose(s, 0, 1), d)
+    mean = mat[s_idx, d_idx] + a
+    sigma_g_alpha = pyro.param('sigma_g_alpha', torch.Tensor([params['alpha_init']]), constraint=constraints.positive)
+    sigma_g_beta = pyro.param('sigma_g_beta', torch.Tensor([params['beta_init']]), constraint=constraints.positive)
+    sigma = pyro.sample('sigma', dist.Gamma(sigma_g_alpha, sigma_g_beta))
+    with pyro.plate('data_plate', n_obs):
+        data = pyro.sample('data', dist.Normal(mean, sigma * torch.ones(n_obs)), obs=obs)
+    return data
+
+
 # n_samp: number of samples
 # n_drug: number of drugs
 # obs: torch.Tensor of observations
 # s_idx: numpy array where s_idx[i] is the index of the sample for the i-th observation
 # d_idx: numpy array where d_idx[i] is the index of the drug for the i-th observation
 def model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None):
+    print('NORMAL MODEL!')
     if obs is None and n_obs is None:
         print('Error!: both obs and n_obs are None.')
     if obs is not None:
@@ -55,7 +90,7 @@ def model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None):
     a_d_sigma = pyro.param('a_d_sigma', torch.Tensor([params['a_sigma_init']]), constraint=constraints.positive)
     with pyro.plate('d_plate', n_drug):
         a_d = pyro.sample('a_d', dist.Normal(torch.zeros(n_drug), a_d_sigma * torch.ones(n_drug)))
-        d = pyro.sample('d', dist.Normal(torch.zeros(n_drug), d_sigma))
+        d = pyro.sample('d', dist.Normal(torch.zeros(n_drug), d_sigma * torch.ones(n_drug)))
     # create data
     mean = s[s_idx] * d[d_idx] + a_s[s_idx] + a_d[d_idx] + a
     sigma_g_alpha = pyro.param('sigma_g_alpha', torch.Tensor([params['alpha_init']]), constraint=constraints.positive)

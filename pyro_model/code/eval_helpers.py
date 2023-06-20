@@ -24,6 +24,28 @@ def predict(mcmc_samples, s_test_idx, d_test_idx):
     assert (sigma.shape[0] == m) and (sigma.shape[1] == 1)
     return mu, sigma
 
+def vectorized_predict(mcmc_samples, s_test_idx, d_test_idx, n_mcmc, n_samp, n_drug, k=1):
+    assert len(s_test_idx) == len(d_test_idx)
+    n = len(s_test_idx)
+    m = n_mcmc
+    # read in mcmc samples for each variable
+    s = np.array(mcmc_samples['s']) 
+    d = np.array(mcmc_samples['d'])
+    a = np.array(mcmc_samples['a'])
+    sigma = np.array(mcmc_samples['sigma'])
+    # sanity check dimensions
+    assert (s.shape[0] == m) and (s.shape[1] == k) and (s.shape[2] == n_samp)
+    assert (d.shape[0] == m) and (d.shape[1] == k) and (d.shape[2] == n_drug)
+    assert (a.shape[0] == m) and (a.shape[1] == 1)
+    # combine above matrices to create mu
+    # to create mu, multiply s and d together
+    # get array with n
+    m = s.shape[0]
+    mu = np.multiply(s[:, 0:m, s_test_idx], d[:, 0:m, d_test_idx]) + a
+    assert (mu.shape[0] == m) and (mu.shape[1] == n)
+    assert (sigma.shape[0] == m) and (sigma.shape[1] == 1)
+    return mu, sigma
+
 def r_squared(mu, test):
     means = np.mean(mu, axis=0)
     assert means.shape[0] == test.shape[0]
