@@ -6,4 +6,4 @@ save_dir=$day_dir/pipeline
 mkdir -p $save_dir
 mkdir -p $base_dir/split
 
-python3 code/pipeline.py data_fn=$base_dir n_total_obs=-1 n_mcmc=5 n_warmup=5 n_iter=3 thinning=5 directory=$save_dir use_real_data=1 k=2
+python3 code/pipeline.py data_fn=$base_dir n_total_obs=-1 n_mcmc=200 n_warmup=500 n_iter=3 thinning=100 directory=$save_dir use_real_data=1 k=2

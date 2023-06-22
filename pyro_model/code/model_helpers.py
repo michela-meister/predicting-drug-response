@@ -38,20 +38,21 @@ def vectorized_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None,
     a_sigma = pyro.param('a_sigma', torch.Tensor([params['a_sigma_init']]), constraint=constraints.positive)
     a = pyro.sample('a', dist.Normal(torch.zeros(()), a_sigma * torch.ones(())))   
     # create s
-    s_g_alpha = pyro.param('s_g_alpha', torch.Tensor([params['g_alpha_init']]), constraint=constraints.positive)
-    s_g_beta = pyro.param('s_g_beta', torch.Tensor([params['g_beta_init']]), constraint=constraints.positive)
+    s_g_alpha = pyro.param('s_g_alpha', params['g_alpha_init'] * torch.ones((k, n_samp)), constraint=constraints.positive)
+    s_g_beta = pyro.param('s_g_beta', params['g_beta_init'] * torch.ones((k, n_samp)), constraint=constraints.positive)
     s_sigma = pyro.param('s_sigma', dist.Gamma(s_g_alpha, s_g_beta), constraint=constraints.positive)
     with pyro.plate('s_plate', n_samp):
-        s = pyro.sample('s', dist.Normal(torch.zeros((k, n_samp)), s_sigma * torch.ones((k, n_samp))))
+        s = pyro.sample('s', dist.Normal(torch.zeros((k, n_samp)), s_sigma))
     # create d
-    d_g_alpha = pyro.param('d_g_alpha', torch.Tensor([params['g_alpha_init']]), constraint=constraints.positive)
-    d_g_beta = pyro.param('d_g_beta', torch.Tensor([params['g_beta_init']]), constraint=constraints.positive)
+    d_g_alpha = pyro.param('d_g_alpha', params['g_alpha_init'] * torch.ones((k, n_drug)), constraint=constraints.positive)
+    d_g_beta = pyro.param('d_g_beta', params['g_beta_init'] * torch.ones((k, n_drug)), constraint=constraints.positive)
     d_sigma = pyro.param('d_sigma', dist.Gamma(d_g_alpha, d_g_beta), constraint=constraints.positive)
     with pyro.plate('d_plate', n_drug):
-        d = pyro.sample('d', dist.Normal(torch.zeros((k, n_drug)), d_sigma * torch.ones((k, n_drug))))
+        d = pyro.sample('d', dist.Normal(torch.zeros((k, n_drug)), d_sigma))
     # create data
     # rank-k matrix
-    mat = torch.matmul(torch.transpose(s, 0, 1), d)
+    s = torch.transpose(s, 0, 1)
+    mat = torch.matmul(s, d)
     mean = mat[s_idx, d_idx] + a
     sigma_g_alpha = pyro.param('sigma_g_alpha', torch.Tensor([params['alpha_init']]), constraint=constraints.positive)
     sigma_g_beta = pyro.param('sigma_g_beta', torch.Tensor([params['beta_init']]), constraint=constraints.positive)

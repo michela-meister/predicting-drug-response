@@ -177,6 +177,12 @@ def get_mcmc_samples_with_thinning(n_samp, n_drug, s_idx, d_idx, params, obs_tra
 		prev_sample = mcmc_sample_to_tensor(final_sample)
 	return thinned_samples
 
+def vectorized_evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, hi, lo, n_mcmc, n_samp, n_drug, k):
+	mu, sigma = evaluate.vectorized_predict(mcmc_samples, s_test_idx, d_test_idx, n_mcmc, n_samp, n_drug, k)
+	r_sq = evaluate.r_squared(mu, obs_test)
+	coverage = evaluate.coverage(mu, sigma, obs_test, hi, lo)
+	return r_sq, coverage
+
 def evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, hi, lo):
 	mu, sigma = evaluate.predict(mcmc_samples, s_test_idx, d_test_idx)
 	r_sq = evaluate.r_squared(mu, obs_test)
@@ -247,7 +253,7 @@ def main():
 		mcmc_samples = vectorized_get_mcmc_samples_with_simple_thinning(n_samp, n_drug, s_idx, d_idx, const.PARAMS, obs_train, n_mcmc, n_warmup, 
 			thinning=thinning, k=k)
 		# evaluate vs test set
-		r_sq, cov = evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, const.HI, const.LO)
+		r_sq, cov = vectorized_evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, const.HI, const.LO, n_mcmc, n_samp, n_drug, k)
 		r_sq_list.append(r_sq)
 		cov_list.append(cov)
 		np.savetxt(r_sq_fn, np.array(r_sq_list))
