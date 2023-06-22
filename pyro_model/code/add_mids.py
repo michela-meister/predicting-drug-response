@@ -33,5 +33,9 @@ assert len(df) == old_len
 df = df.rename(columns = {'Tumor Volume mm3': 'Volume'})
 cols = ['MID', 'Sample', 'Drug', 'Day', 'Volume']
 df_out = df[cols]
-# Save file
 df_out.to_csv(write_dir + '/welm_pdx_clean_mid.csv', index=False)
+# save df with excel_sheet names for recreating paper plots
+cols1 = ['MID', 'Sample', 'Drug', 'Day', 'Volume', 'excel_sheet']
+df_out1 = df[cols1]
+df_out1.to_csv(write_dir + '/welm_pdx_clean_mid_w_excel_sheet.csv', index=False)
+
