@@ -39,14 +39,38 @@ def assign_single_value(df, mids, max_val):
     assert (set(df.MID.unique()) >= set(mids))
     return df
 
-def assign_end_value(df, mids, end_day):
+def assign_normal_mids(df, mids, end_day):
+    # get df restricted to mids
+    d = df.loc[df.MID.isin(mids)].copy(deep=True)
     # only keep rows for the end_day
-    df = df.loc[df.Day == end_day]
-    df = df[['MID', 'Sample', 'Drug', 'log(V_V0)']].drop_duplicates()
+    d = d.loc[d.Day == end_day]
+    d = d[['MID', 'Sample', 'Drug', 'log(V_V0)']].drop_duplicates()
     # ensure no mid's dropped
-    assert (len(df == len(mids)))
-    assert (set(df.MID.unique()) >= set(mids))
-    return df
+    assert (len(d) == len(mids))
+    assert (set(d.MID.unique()) >= set(mids))
+    return d
+
+def assign_middle_mids(df, mids):
+    # get df restricted to mids
+    d = df.loc[df.MID.isin(mids)].copy(deep=True)
+    d = d.loc[d.groupby('MID')['Day'].idxmax()]
+    assert (d.Day == d.end).all()
+    d = d[['MID', 'Sample', 'Drug', 'log(V_V0)']].drop_duplicates()
+    # check mids
+    assert (len(d) == len(mids))
+    assert (set(d.MID.unique()) >= set(mids))
+    return d
+
+def assign_short_mids(df, mids, value):
+    # get df restricted to mids
+    d = df.loc[df.MID.isin(mids)].copy(deep=True)
+    assert (d['log(V_V0)'] >= 1.7).all()
+    d['log(V_V0)'] = value
+    d = d[['MID', 'Sample', 'Drug', 'log(V_V0)']].drop_duplicates()
+    # check mids
+    assert (len(d) == len(mids))
+    assert (set(d.MID.unique()) >= set(mids))
+    return d
 
 def get_max_end_value(df, end_day):
 	n_mids = df.MID.nunique()
@@ -91,9 +115,29 @@ write_dir = sys.argv[2].split("=")[1]
 end_day = int(sys.argv[3].split("=")[1])
 
 df = pd.read_csv(read_fn)
+# drop mids 200, 235: these stop at day 14, but with no huge explosion in volume, so we don't know why they stopped
+df = df.loc[~df.MID.isin([200, 235])]
 d = get_start_and_end(df)
 # check all mids start on day 1
 assert (d.start == 1).all()
 d = get_log_volume(d)
-d = set_duration(d, END_DAY)
-d.to_csv(write_dir + '/welm_pdx_clean_mid_volume.csv', index=False)
+# get max value
+max_val = get_max_end_value(d, END_DAY)
+# get total number of mids
+mids = d.MID.unique()
+n_mids = d.MID.nunique()
+# split mids by duration and assign value
+normal_mids = d.loc[d.end >= END_DAY].MID.unique()
+normal_df = assign_normal_mids(d, normal_mids, END_DAY)
+middle_mids = d.loc[(d.end < END_DAY) & (d.end >= 19)].MID.unique()
+middle_df = assign_middle_mids(d, middle_mids)
+short_mids = d.loc[d.end < 19].MID.unique()
+short_df = assign_short_mids(d, short_mids, max_val)
+# combine dataframes and check size
+final_df = pd.concat([short_df, middle_df, normal_df]).reset_index(drop=True)
+assert len(final_df) == n_mids
+assert set(final_df.MID.unique()) >= set(mids)
+
+final_df.to_csv(write_dir + '/welm_pdx_clean_mid_volume.csv', index=False)
+
+
