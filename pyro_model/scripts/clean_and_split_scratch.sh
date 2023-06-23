@@ -9,6 +9,7 @@ mkdir -p $base_dir/normality_plots
 python3 code/clean_data.py read_fn=data/welm_pdx.csv write_dir=$base_dir
 python3 code/add_mids.py read_fn=$base_dir/welm_pdx_clean.csv write_dir=$base_dir
 python3 code/create_paper_plots.py read_fn=$base_dir/welm_pdx_clean_mid_w_excel_sheet.csv write_dir=$base_dir
+python3 code/plot_relative_mid_data.py in_path=$base_dir/welm_pdx_clean_mid.csv write_dir=$base_dir
 ## add in code to select MIDs w short durations
 #python3 code/plot_mid_data.py in_path=$base_dir/welm_pdx_clean_mid.csv write_dir=$base_dir
 ## add in code to select MIDs w short durations & adjust as needed

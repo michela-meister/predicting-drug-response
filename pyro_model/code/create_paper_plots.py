@@ -20,16 +20,12 @@ df = pd.read_csv(read_fn)
 # assert that each mid is in exactly 1 excel sheet
 assert (df[['MID', 'excel_sheet']].groupby('MID')['excel_sheet'].nunique() == 1).all()
 
-# TODO: normalize volume by day 0
-# for each MID, get day 0 volume
+# normalize all volume measurements by measurement on day 0
 start = df.loc[df.groupby('MID')['Day'].idxmin()]
 start = start.rename(columns = {'Volume': 'start_vol'})
 start = start[['MID', 'start_vol']].drop_duplicates()
 df = df.merge(start, on=['MID'], validate='many_to_one')
 df['V_V0'] = df['Volume'].div(df['start_vol'])
-# merge the above with the full dataframe
-# compute V/V0
-# switch to plotting V/V0
 
 # get all excel sheets in list
 sheets = list(df.excel_sheet.unique())
