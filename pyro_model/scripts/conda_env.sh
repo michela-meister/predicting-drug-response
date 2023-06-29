@@ -1,2 +1,5 @@
 #!/bin/bash
-conda create -n menv python matplotlib numpy pyro seaborn sys torch pandas pickle scipy logging os graphviz
+conda create -n mmenv python=3.9
+conda activate mmenv
+conda install -c conda-forge pyro-ppl python-graphviz
+conda install -c conda-forge seaborn pandas scipy
