@@ -21,7 +21,8 @@ def predict(mcmc_samples, s_test_idx, d_test_idx):
     m = s.shape[0]
     mu = np.multiply(s[0:m, s_test_idx], d[0:m, d_test_idx]) + a_s[0:m, s_test_idx] + a_d[0:m, d_test_idx] + a
     assert (mu.shape[0] == m) and (mu.shape[1] == n)
-    assert (sigma.shape[0] == m) and (sigma.shape[1] == 1)
+    assert (sigma.shape[0] == m)
+    sigma = sigma.reshape((m, 1))
     return mu, sigma
 
 def vectorized_predict(mcmc_samples, s_test_idx, d_test_idx, n_mcmc, n_samp, n_drug, k):
@@ -65,7 +66,7 @@ def coverage(mu, sigma, obs, hi, lo):
     m = mu.shape[0]
     n = mu.shape[1]
     # generate synthetic samples for each observation
-    synth = mu + sigma * np.random.normal(loc=0, scale=1, size=(m, n))
+    synth = mu + np.tile(sigma, n) * np.random.normal(loc=0, scale=1, size=(m, n))
     # sort synthetic samples for each observation
     sorted_synth = np.sort(synth, axis=0)
     # compute hi and lo index
