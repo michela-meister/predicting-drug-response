@@ -1,0 +1,10 @@
+# Write scripts for cluster, updating data dir (to read from) in all of them
+# Write test scripts for cluster as well
+# Write function to save train/test splits and input params to the correct places
+# Copy all code over to cluster
+# Process for cluster:
+# (1) Run data cleaning & processing script on cluster
+# (2) After (1) finishes, run test scripts. Test scripts should look just like the real ones, only with fewer samples drawn
+# (3) Run digest script on output of (2)
+# (4) Run full scripts!
+# (5) Check in to make sure scripts are running successfully (w/ no errors)

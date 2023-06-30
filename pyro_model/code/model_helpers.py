@@ -61,7 +61,9 @@ def vectorized_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None,
 # obs: torch.Tensor of observations
 # s_idx: numpy array where s_idx[i] is the index of the sample for the i-th observation
 # d_idx: numpy array where d_idx[i] is the index of the drug for the i-th observation
-def model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None):
+def model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None, k=1):
+    if k != 1:
+        print('need k = 1!')
     print('NORMAL MODEL!')
     if obs is None and n_obs is None:
         print('Error!: both obs and n_obs are None.')
