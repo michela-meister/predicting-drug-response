@@ -81,10 +81,10 @@ def get_synthetic_data(directory, n_total_obs=None):
 	obs_train, obs_test = generate_data(n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx)
 	return n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test
 
-def draw_mcmc_samples(kernel, n_samp, n_drug, s_idx, d_idx, params, obs_train, n_mcmc, n_warmup, initial_params=None):
+def draw_mcmc_samples(kernel, n_samp, n_drug, s_idx, d_idx, params, obs_train, n_mcmc, n_warmup, initial_params=None, k=1):
 	n_train = len(s_idx)
 	mcmc = pyro.infer.MCMC(kernel, num_samples=n_mcmc, warmup_steps=n_warmup, initial_params=initial_params)
-	mcmc.run(n_samp, n_drug, s_idx, d_idx, params, obs=obs_train, n_obs=n_train)
+	mcmc.run(n_samp, n_drug, s_idx, d_idx, params, obs=obs_train, n_obs=n_train, k=k)
 	mcmc_samples = {k: v.detach().cpu().numpy() for k, v in mcmc.get_samples().items()}
 	return mcmc_samples
 
@@ -144,6 +144,15 @@ def get_mcmc_samples_with_simple_thinning(n_samp, n_drug, s_idx, d_idx, params, 
 	thinned_samples = simple_thinning(mcmc_samples, n_draw, n_mcmc, thinning)
 	return thinned_samples
 
+def vec_get_mcmc_samples_with_simple_thinning(n_samp, n_drug, s_idx, d_idx, params, obs_train, n_mcmc, n_warmup, thinning, k):
+	# number of total samples to draw, which will be thinned out
+	kernel = pyro.infer.mcmc.NUTS(modeling.vectorized_model, jit_compile=True)
+	n_draw = n_mcmc * thinning
+	mcmc_samples = draw_mcmc_samples(kernel, n_samp, n_drug, s_idx, d_idx, params, obs_train, n_draw, n_warmup, initial_params=None, k=k)
+	# thin samples
+	thinned_samples = simple_thinning(mcmc_samples, n_draw, n_mcmc, thinning)
+	return thinned_samples
+
 # n_mcmc is the number of samples desired
 # thinning is the number of draws from the mcmc between returned samples
 def get_mcmc_samples_with_thinning(n_samp, n_drug, s_idx, d_idx, params, obs_train, n_mcmc, n_warmup, thinning):
@@ -170,6 +179,12 @@ def get_mcmc_samples_with_thinning(n_samp, n_drug, s_idx, d_idx, params, obs_tra
 
 def evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, hi, lo):
 	mu, sigma = evaluate.predict(mcmc_samples, s_test_idx, d_test_idx)
+	r_sq = evaluate.r_squared(mu, obs_test)
+	coverage = evaluate.coverage(mu, sigma, obs_test, hi, lo)
+	return r_sq, coverage
+
+def vec_evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, hi, lo, n_mcmc, n_samp, n_drug, k):
+	mu, sigma = evaluate.vectorized_predict(mcmc_samples, s_test_idx, d_test_idx, n_mcmc, n_samp, n_drug, k)
 	r_sq = evaluate.r_squared(mu, obs_test)
 	coverage = evaluate.coverage(mu, sigma, obs_test, hi, lo)
 	return r_sq, coverage
@@ -208,10 +223,11 @@ def retrieve_args(args):
 	thinning = int(args[6].split("=")[1])
 	directory = args[7].split("=")[1]
 	use_real_data = bool(int(args[8].split("=")[1]))
+	k = int(args[9].split("=")[1])
 	input_args = {'data_dir': data_dir, 'n_total_obs': n_total_obs, 'n_mcmc': n_mcmc, 'n_warmpup': n_warmup, 'n_iter': n_iter, 'thining': thinning,
-	    'directory': directory, 'use_real_data': use_real_data}
+	    'directory': directory, 'use_real_data': use_real_data, 'k': k}
 	helpers.write_to_pickle(input_args, directory + '/input_args.pkl')
-	return data_dir, n_total_obs, n_mcmc, n_warmup, n_iter, thinning, directory, use_real_data
+	return data_dir, n_total_obs, n_mcmc, n_warmup, n_iter, thinning, directory, use_real_data, k
 
 def main():
 	helpers.check_args(sys.argv, 9)
@@ -250,5 +266,43 @@ def main():
 	histogram_r_sq(r_sq_fn, r_sq_plot_fn, use_real_data)
 	histogram_coverage(cov_fn, cov_plot_fn, use_real_data)
 
+def vectorized_main():
+	helpers.check_args(sys.argv, 10)
+	data_dir, n_total_obs, n_mcmc, n_warmup, n_iter, thinning, directory, use_real_data, k = retrieve_args(sys.argv)
+    # define file fns
+	r_sq_fn = directory + '/r_squared.txt'
+	cov_fn = directory + '/coverage.txt'
+	r_sq_list = []
+	cov_list = []
+	# decide whether to use real or synthetic data
+	for seed in range(n_iter):
+		pyro.set_rng_seed(seed)
+		pyro.clear_param_store()
+		# split dataset
+		data_fn = data_dir + '/welm_pdx_clean_mid_volume.csv'
+		split_dir = data_dir + '/split'
+		split_helpers.split_dataset(data_fn, split_dir)
+		if use_real_data:
+			n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test = get_real_data(split_dir)
+		else:
+			n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test = get_synthetic_data(split_dir, n_total_obs)
+		# fit model to synthetic data
+		mcmc_samples = vec_get_mcmc_samples_with_simple_thinning(n_samp, n_drug, s_idx, d_idx, const.PARAMS, obs_train, n_mcmc, n_warmup, thinning=thinning, k=k)
+		# evaluate vs test set
+		r_sq, cov = vec_evaluation(mcmc_samples, s_test_idx, d_test_idx, obs_test, const.HI, const.LO, n_mcmc, n_samp, n_drug, k)
+		r_sq_list.append(r_sq)
+		cov_list.append(cov)
+		np.savetxt(r_sq_fn, np.array(r_sq_list))
+		np.savetxt(cov_fn, np.array(cov_list))
+	print('r-squared:')
+	print(r_sq_list)
+	print('coverage:')
+	print(cov_list)
+	r_sq_plot_fn = directory + '/r_squared_plot.png'
+	cov_plot_fn = directory + '/coverage_plot.png'
+	histogram_r_sq(r_sq_fn, r_sq_plot_fn, use_real_data)
+	histogram_coverage(cov_fn, cov_plot_fn, use_real_data)
+
 if __name__ == "__main__":
-	main()
+	#main()
+	vectorized_main()

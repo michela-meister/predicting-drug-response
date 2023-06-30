@@ -42,15 +42,17 @@ def vectorized_predict(mcmc_samples, s_test_idx, d_test_idx, n_mcmc, n_samp, n_d
     print('n_samp: ' + str(n_samp))
     assert (s.shape[0] == m) and (s.shape[1] == k) and (s.shape[2] == n_samp)
     assert (d.shape[0] == m) and (d.shape[1] == k) and (d.shape[2] == n_drug) 
-    assert (a.shape[0] == m) and (a.shape[1] == 1)
+    assert (a.shape[0] == m)
+    a = a.reshape((m, 1))
     # combine above matrices to create mu
     # to create mu, multiply s and d together
     # get array with n
     s = np.transpose(s, (0, 2, 1))
     mat = np.matmul(s, d)
-    mu = mat[:, s_test_idx, d_test_idx] + a
+    mu = mat[:, s_test_idx, d_test_idx] + np.tile(a, (1, n))
     assert (mu.shape[0] == m) and (mu.shape[1] == n)
-    assert (sigma.shape[0] == m) and (sigma.shape[1] == 1)
+    assert (sigma.shape[0] == m)
+    sigma = sigma.reshape((m, 1))
     return mu, sigma
 
 def r_squared(mu, test):
