@@ -294,7 +294,7 @@ def main():
 	pyro.clear_param_store()
 	# split dataset
 	data_fn = data_dir + '/welm_pdx_clean_mid_volume.csv'
-	split_dir = data_dir + '/split'
+	split_dir = data_dir + '/' + str(seed) +  '/split'
 	split_helpers.split_dataset(data_fn, split_dir)
 	if use_real_data:
 		n_samp, n_drug, s_idx, d_idx, s_test_idx, d_test_idx, obs_train, obs_test = get_real_data(split_dir)
