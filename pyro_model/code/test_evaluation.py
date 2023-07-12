@@ -322,7 +322,6 @@ def main():
 	print('coverage:')
 	print(cov)
 
-
 if __name__ == "__main__":
 	#orig_main()
 	#vectorized_main()

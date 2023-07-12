@@ -36,19 +36,22 @@ def vectorized_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None,
         n_obs = obs.shape[0]
     # create global offset
     a_sigma = pyro.param('a_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
-    a = pyro.sample('a', dist.Normal(torch.zeros(()), a_sigma * torch.ones(())))   
+    a = pyro.sample('a', dist.Normal(0, a_sigma))   
     # create s
     s_sigma = pyro.param('s_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
     with pyro.plate('s_plate', n_samp):
-        s = pyro.sample('s', dist.Normal(torch.zeros((k, n_samp)), s_sigma * torch.ones((k, n_samp))))
+        with pyro.plate('k1', k):
+            s = pyro.sample('s', dist.Normal(0, s_sigma))
     # create d
     d_sigma = pyro.param('d_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
     with pyro.plate('d_plate', n_drug):
-        d = pyro.sample('d', dist.Normal(torch.zeros((k, n_drug)), d_sigma * torch.ones((k, n_drug))))
+        with pyro.plate('k2', k):
+            d = pyro.sample('d', dist.Normal(0, d_sigma))
     # create data
     # rank-k matrix
     s = torch.transpose(s, 0, 1)
-    mat = torch.matmul(s, d)
+    mat = torch.matmul(s, d) # should be: n-samp x n-drug
+    assert (mat.shape[0] == n_samp) and (mat.shape[1] == n_drug)
     mean = mat[s_idx, d_idx] + a
     sigma = pyro.sample('sigma', dist.Gamma(params['alpha'], params['beta']))
     with pyro.plate('data_plate', n_obs):
