@@ -147,21 +147,21 @@ def get_avg(read_dir, rank_list, is_test):
 		avg.append(np.mean(arr))
 	return avg
 
-def plot_avg(read_dir, save_dir, use_real_data, rank_list, N, obs_name):
+def plot_avg(read_dir, save_dir, use_real_data, rank_list, N):
 	# get average for train and test values
 	train_avg = get_avg(read_dir, rank_list, False)
 	test_avg = get_avg(read_dir, rank_list, True)
 	plt.plot(rank_list, train_avg, 'ko-', label='train')
 	plt.plot(rank_list, test_avg, 'co-', label='test')
-	title = 'Average r-squared vs K, N = ' + str(N) + ' per point'
+	title = 'Average r-squared vs rank, N = ' + str(N) + ' per point'
 	if use_real_data:
 		plot_fn = save_dir + '/plot_avg_real.png'
-		title = obs_name + ' ' + title
+		title = 'Welm Data: ' + title
 	else:
 		plot_fn = save_dir + '/plot_avg_synth.png'
 		title = 'Synthetic Data: ' + title
 	plt.title(title)
-	plt.xlabel('K')
+	plt.xlabel('rank')
 	plt.ylabel('average r-squared')
 	plt.legend()
 	write_fn = save_dir + '/avg.png'
@@ -219,8 +219,11 @@ def fit_k(seed, k, use_real_data, data_dir, obs_name):
     optimizer = Adam(adam_params)
     autoguide = AutoNormal(modeling.vectorized_model)
     svi = SVI(modeling.vectorized_model, autoguide, optimizer, loss=Trace_ELBO())
+    losses = []
     for step in tqdm.trange(NSTEPS):
         svi.step(n_samp, n_drug, s_idx, d_idx, const.PARAMS, obs=obs_train, k=k)
+        losses.append(svi.evaluate_loss())
+
     # retrieve values out for s and d vectors
     s_loc = pyro.param("AutoNormal.locs.s").detach().numpy()
     s_scale = pyro.param("AutoNormal.scales.s").detach().numpy()
@@ -248,7 +251,7 @@ def main():
     	test_fn = save_dir + '/r_squared_' + str(k) + '_test.txt'
     	write_test_fn = save_dir + '/hist_' + str(k) + '_test.png'
     	plot_histogram(test_fn, write_test_fn, k, use_real_data, obs_name)
-    plot_avg(save_dir, save_dir, use_real_data, rank_list, len(seed_list), obs_name)
+    plot_avg(save_dir, save_dir, use_real_data, rank_list, len(seed_list))
 
 def main_tester():
     pyro.util.set_rng_seed(0)
@@ -260,27 +263,36 @@ def main_tester():
     print('len train_df: ' + str(len(train_df)))
     print('len test_df: ' + str(len(test_df)))
 
-def low_rank_tester():
-	# TODO: move hard-coded values to inputs & create all necessary directories
-    data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
-    use_real_data = 1
-    rank_list = range(1, NRANK + 1)
-    seed_list = range(0, NSEED)
-    save_dir = 'results/2023-07-13/low_rank_tester'
-    obs_name = 'value'
-    ranks(rank_list, seed_list, use_real_data, data_dir, save_dir, obs_name)
-    # plot histograms - break this out into a separate function
-    for k in rank_list:
-    	train_fn = save_dir + '/r_squared_' + str(k) + '_train.txt'
-    	write_train_fn = save_dir + '/hist_' + str(k) + '_train.png'
-    	plot_histogram(train_fn, write_train_fn, k, use_real_data, obs_name)
-    	test_fn = save_dir + '/r_squared_' + str(k) + '_test.txt'
-    	write_test_fn = save_dir + '/hist_' + str(k) + '_test.png'
-    	plot_histogram(test_fn, write_test_fn, k, use_real_data, obs_name)
-    plot_avg(save_dir, save_dir, use_real_data, rank_list, len(seed_list), obs_name)
-
-
+def loss_tester():
+    pyro.util.set_rng_seed(0)
+    pyro.clear_param_store()
+    # get data
+    # DO: edit data_fn and split data functions
+    df = pd.read_csv('~/Documents/research/tansey/msk_intern/pyro_model/data/rep-gdsc-ctd2-clean.csv')
+    n_samp = df['sample_id'].nunique()
+    n_drug = df['drug_id'].nunique()
+    obs_name = 'REP_auc_overlap'
+    # split data
+    train_df, test_df = split_train_test(df)
+    s_idx, d_idx, obs_train = get_obs_info(train_df, obs_name)
+    s_test_idx, d_test_idx, obs_test = get_obs_info(test_df, obs_name)
+    # fit model
+    adam_params = {"lr": 0.05}
+    optimizer = Adam(adam_params)
+    autoguide = AutoNormal(modeling.vectorized_model)
+    svi = SVI(modeling.vectorized_model, autoguide, optimizer, loss=Trace_ELBO())
+    losses = []
+    for step in tqdm.trange(NSTEPS):
+        svi.step(n_samp, n_drug, s_idx, d_idx, const.PARAMS, obs=obs_train, k=2)
+        losses.append(svi.evaluate_loss(n_samp, n_drug, s_idx, d_idx, const.PARAMS, obs=obs_train, k=2))
+    fig = plt.figure()
+    plt.ylabel('Loss')
+    plt.xlabel('Iteration')
+    plt.scatter(range(len(losses)), losses)
+    plt.savefig('results/2023-07-13/loss_testing.png', bbox_inches='tight')
+    plt.clf()
+    plt.close()
 
 if __name__ == "__main__":
-    main()
+    loss_tester()
     #main_tester()

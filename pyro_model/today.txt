@@ -1,0 +1,12 @@
+- Fixed error in multi_eval: bug was that I'd set n_train based on number of observations (a very big number) but then applied it to pairs (a smaller number)
+- Figured out how to plot loss (can add this in later to optimize training time...)
+
+TODO
+- Pass in rank-5 model to "debug"
+- Plot same train-test curves for dumb low-rank option & combine together in notebook
+- Code up model w low rank: Should transform S to S'
+- Walk through model with Wes!
+
+LATER
+- Incorporate svi loss to decide when to stop running
+- Fix vectorized model so that it's different in rank 1 case? (Has extra vectors?)
