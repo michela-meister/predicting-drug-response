@@ -15,7 +15,7 @@ import global_constants as const
 import model_helpers as modeling
 import split_helpers
 
-NSTEPS = 2000
+NSTEPS = 50
 NBINS = 20
 NSEED = 10
 NRANK = 10
@@ -179,15 +179,15 @@ def r_squared(means, test):
 	r = pearson_corr[0, 1]
 	return np.power(r, 2)
 
-def ranks(rank_list, seed_list, use_real_data, data_dir, save_dir, obs_name):
+def ranks(rank_list, seed_list, use_real_data, data_fn, save_dir, obs_name):
 	for k in rank_list:
-		round_k(seed_list, k, use_real_data, data_dir, save_dir, obs_name)
+		round_k(seed_list, k, use_real_data, data_fn, save_dir, obs_name)
 
-def round_k(seed_list, k, use_real_data, data_dir, save_dir, obs_name):
+def round_k(seed_list, k, use_real_data, data_fn, save_dir, obs_name):
 	rsq_test_list = []
 	rsq_train_list = []
 	for seed in seed_list:
-		rsq_test, rsq_train = fit_k(seed, k, use_real_data, data_dir, obs_name)
+		rsq_test, rsq_train = fit_k(seed, k, use_real_data, data_fn, obs_name)
 		rsq_test_list.append(rsq_test)
 		rsq_train_list.append(rsq_train)
 	test_fn = save_dir + '/r_squared_' + str(k) + '_test.txt'
@@ -201,12 +201,11 @@ def get_r_squared(s_loc, d_loc, s_idx, d_idx, obs):
 	rsq = r_squared(means, obs)
 	return rsq
 
-def fit_k(seed, k, use_real_data, data_dir, obs_name):
+def fit_k(seed, k, use_real_data, data_fn, obs_name):
     pyro.util.set_rng_seed(seed)
     pyro.clear_param_store()
     # get data
     # DO: edit data_fn and split data functions
-    data_fn = data_dir + '/rep-gdsc-ctd2-clean.csv'
     df = pd.read_csv(data_fn)
     n_samp = df['sample_id'].nunique()
     n_drug = df['drug_id'].nunique()
@@ -233,13 +232,13 @@ def fit_k(seed, k, use_real_data, data_dir, obs_name):
 
 def main():
 	# TODO: move hard-coded values to inputs & create all necessary directories
-    data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
+    data_fn = '~/Documents/research/tansey/msk_intern/pyro_model/data/rep-gdsc-ctd2-clean.csv'
     use_real_data = 1
     rank_list = range(1, NRANK + 1)
     seed_list = range(0, NSEED)
     save_dir = 'results/2023-07-13/multi_eval'
     obs_name = 'REP_auc_overlap'
-    ranks(rank_list, seed_list, use_real_data, data_dir, save_dir, obs_name)
+    ranks(rank_list, seed_list, use_real_data, data_fn, save_dir, obs_name)
     # plot histograms - break this out into a separate function
     for k in rank_list:
     	train_fn = save_dir + '/r_squared_' + str(k) + '_train.txt'
@@ -262,13 +261,13 @@ def main_tester():
 
 def low_rank_tester():
 	# TODO: move hard-coded values to inputs & create all necessary directories
-    data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
+    data_fn = '~/Documents/research/tansey/msk_intern/pyro_model/data/rank5.csv'
     use_real_data = 1
     rank_list = range(1, NRANK + 1)
     seed_list = range(0, NSEED)
     save_dir = 'results/2023-07-13/low_rank_tester'
     obs_name = 'value'
-    ranks(rank_list, seed_list, use_real_data, data_dir, save_dir, obs_name)
+    ranks(rank_list, seed_list, use_real_data, data_fn, save_dir, obs_name)
     # plot histograms - break this out into a separate function
     for k in rank_list:
     	train_fn = save_dir + '/r_squared_' + str(k) + '_train.txt'
@@ -282,5 +281,6 @@ def low_rank_tester():
 
 
 if __name__ == "__main__":
-    main()
+    #main()
     #main_tester()
+    low_rank_tester()
