@@ -27,6 +27,63 @@ def get_model_inputs(train_fn, sample_fn, drug_fn):
     obs = torch.Tensor(df['log(V_V0)'])
     return n_samp, n_drug, s_idx, d_idx, obs
 
+def transfer_model(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, params, obs1=None, n_obs1=None, obs2=None, n_obs2=None, k=1, r=1):
+    print('TRANSFER!')
+    print('K = ' + str(k))
+    if obs1 is None and n_obs1 is None:
+        print('Error!: both obs1 and n_obs1 are None.')
+    if obs1 is not None:
+        n_obs1 = obs1.shape[0]
+    if obs2 is None and n_obs2 is None:
+        print('Error: both obs2 and n_obs2 are None')
+    if obs2 is not None:
+        n_obs2 = obs2.shape[0]
+    # create global offset
+    a1_sigma = pyro.param('a1_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
+    a1 = pyro.sample('a1', dist.Normal(0, a1_sigma))   
+    # create s
+    s_sigma = pyro.param('s_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
+    with pyro.plate('s_plate', n_samp):
+        with pyro.plate('k_s', k):
+            s = pyro.sample('s', dist.Normal(0, s_sigma))
+    s = torch.transpose(s, 0, 1)
+    # create d
+    d_sigma = pyro.param('d_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
+    with pyro.plate('d_plate', n_drug):
+        with pyro.plate('k_d', k):
+            d = pyro.sample('d', dist.Normal(0, d_sigma))
+    # mat1 = sd
+    mat1 = torch.matmul(s, d) # should be: n-samp x n-drug
+    assert (mat1.shape[0] == n_samp) and (mat1.shape[1] == n_drug)
+    mean1 = mat1[s_idx1, d_idx1] + a1
+    sigma1 = pyro.sample('sigma1', dist.Gamma(params['alpha'], params['beta']))
+    with pyro.plate('data1_plate', n_obs1):
+        data1 = pyro.sample('data1', dist.Normal(mean1, sigma1 * torch.ones(n_obs1)), obs=obs1)
+    # create global offset
+    a2_sigma = pyro.param('a2_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
+    a2 = pyro.sample('a2', dist.Normal(0, a2_sigma))  
+    # create W
+    w_sigma = pyro.param('w_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
+    with pyro.plate('w_row_plate', n_samp):
+        with pyro.plate('r_row', r):
+            w_row = pyro.sample('w_row', dist.Normal(0, w_sigma))
+    with pyro.plate('w_col_plate', n_samp):
+        with pyro.plate('r_col', r):
+            w_col = pyro.sample('w_col', dist.Normal(0, w_sigma))
+    w_col = torch.transpose(w_col, 0, 1)
+    W = torch.matmul(w_col, w_row)
+    assert (W.shape[0] == n_samp) and (W.shape[1] == n_samp)
+    # s' = Ws
+    spr = torch.matmul(W, s)
+    assert (spr.shape[0] == n_samp) and (spr.shape[1] == k)
+    mat2 = torch.matmul(spr, d)
+    assert (mat2.shape[0] == n_samp) and (mat2.shape[1] == n_drug)
+    mean2 = mat2[s_idx2, d_idx2] + a2
+    sigma2 = pyro.sample('sigma2', dist.Gamma(params['alpha'], params['beta']))
+    with pyro.plate('data2_plate', n_obs2):
+        data2 = pyro.sample('data2', dist.Normal(mean2, sigma2 * torch.ones(n_obs2)), obs=obs2)
+    # DO: create different vecs a, vecs sigma
+
 def vectorized_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None, k=1):
     print('VECTORIZED!')
     print('K = ' + str(k))

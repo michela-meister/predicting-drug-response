@@ -1,14 +1,26 @@
-- Fixed error in multi_eval: bug was that I'd set n_train based on number of observations (a very big number) but then applied it to pairs (a smaller number)
-- Figured out how to plot loss (can add this in later to optimize training time...)
-- Plotted train and test acc for REP model!
-- Passed in rank-5 matrix to check model for debugging
+TODO UPON RETURN:
+- what is this auc value?
+- normality tests to plot auc, log_auc
+- scatter plot comparing different datasets (take mean of same sample-drug pairs?)
+- plot pearson, spearman correlation for datasets (w/ means)
+============================================================
+- take log of auc
+- implement running (k, r) on multiple seeds
+- run with k=1, r ranging from 0 to 10
+- implement loss function --> use loss to cut-off run
+- run grid of r x k params
+============================================================
+- plot AUC_dataset1 vs AUC_dataset2; plot AUC_dataset2 vs predict(AUC_dataset2)
+- add extra params to model (?)
+- how much more is "explained" by predict()? (and how does this relate to correlation?)
+- run a test on the model where you create a low rank mapping U and see if the model can identify this mapping (ie the r-value is best); can do this with a specific k as well
+============================================================
+** Combine everything in notebook!! **
 
-TODO
-- Code up model w low rank: Should transform S to S'
-- Plot same train-test curves for dumb low-rank option & combine together in notebook
-- Walk through model with Wes!
+QUESTIONS:
+- Ask Wes about process for fitting curves and computing AUC values. Why are there so many 1's?
+- why are there multiple AUC's for some sample, drug pairs?
+- how to handle multiple values when computing correlation? (Take mean?) Esp correlation between datasets
+- is the S, D decomposition unique? Is it ok that we only learn S and not D?
 
-LATER
-- Could try running model with even higher rank!
-- Incorporate svi loss to decide when to stop running
-- Fix vectorized model so that it's different in rank 1 case? (Has extra vectors?)
+
