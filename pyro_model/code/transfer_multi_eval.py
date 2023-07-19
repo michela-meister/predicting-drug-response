@@ -282,5 +282,9 @@ def starter():
 	print('rsq_test: ' + str(rsq_test))
 	print('rsq_train: ' + str(rsq_train))
 
+# for a set seed, r, k, fn: fit the model
+# compute rsq_test, rsq_train: between predict and original
+# save to file
+
 if __name__ == "__main__":
     starter()

@@ -1,8 +1,35 @@
 TODO UPON RETURN:
-- what is this auc value?
-- normality tests to plot auc, log_auc
-- scatter plot comparing different datasets (take mean of same sample-drug pairs?)
-- plot pearson, spearman correlation for datasets (w/ means)
+X save dataset with log_auc 
+X save dataset with logit_auc (clean_multi_datasets)
+X normality tests to plot auc, log(auc), logit(auc) (multi_normality)
+X for cleaning published vals, need to first drop all rows w nans
+X debug the issue with processing the CTD2 dataset
+X input results into google doc!
+===========================================================
+X read in datasets
+X average values
+X get sample, drug names, count
+X recreate paper stats on correlation / concordance (look up!)
+for both raw and log:
+X calculate correlation / concordance (look up what is used in paper): pearson, spearman
+X scatter plots btwn datasets
+X plot distribution of values
+===========================================================
+- implement running (k, r) on multiple seeds
+- write script to run grid
+- implement loss function --> use loss to cut-off run
+- run grid of r x k params (for both log and raw)
+- plot results
+- plot comparing output correlation to paper correlation (on same train/test)
+===========================================================
+- discuss w Wes
+- do k-fold cross val?
+- try with different sizes of test dataset
+
+- dataset stats: sample-drug counts, matlab correlation plot, heatmap plot, number of duplicate readings
+- plot distribution of auc values, log(auc) for different datasets
+- look up concordance & understand claims of similarity in original paper (& try to reproduce these)
+- scatter plot comparing different datasets (take mean of same sample-drug pairs?), plotting pearson, spearman correlations
 ============================================================
 - take log of auc
 - implement running (k, r) on multiple seeds
@@ -16,8 +43,11 @@ TODO UPON RETURN:
 - run a test on the model where you create a low rank mapping U and see if the model can identify this mapping (ie the r-value is best); can do this with a specific k as well
 ============================================================
 ** Combine everything in notebook!! **
+** Clean-up scripts, convert to python scripts **
 
 QUESTIONS:
+- Is low rank a problem??
+- What are the best comparisons? To a human? To another dataset?
 - Ask Wes about process for fitting curves and computing AUC values. Why are there so many 1's?
 - why are there multiple AUC's for some sample, drug pairs?
 - how to handle multiple values when computing correlation? (Take mean?) Esp correlation between datasets
