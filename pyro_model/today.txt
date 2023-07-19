@@ -17,16 +17,17 @@ X plot distribution of values
 ===========================================================
 X save dataset of means (and edit script to read this one in...)
 X save output to file
-- save as pearson correlation?
-- implement running on multiple seeds
-- save output to file & process output
-- implement varying k
-- implement varying r
+X implement running on multiple seeds
+X implement varying k
+X implement varying r
+- save r, k, input params to output file
+- digest runs
 - write script to run grid
-- run grid of r x k params (for both log and raw)
+- run grid of r x k params (for both log and raw) ---> implement on log???
 - plot results
 - compare output to correlation w overlap-auc (on same train/test)
 Q: implement loss function --> use loss to cut-off run
+- save as pearson correlation? (instead of r-squared?)
 ===========================================================
 - discuss w Wes
 - do k-fold cross val?

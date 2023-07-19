@@ -7,13 +7,18 @@ save_dir=$day_dir/transfer_multi_eval/$dataset1'_'$dataset2
 
 mkdir -p $save_dir
 
-
-for k in {1..1}
+for r in {1..2}
 do
-	for s in {1..1}
+	for k in {1..2}
 	do
-		python3 code/transfer_multi_eval.py seed=$s k=$k r=3 obs_name1=$dataset1$suffix obs_name2=$dataset2$suffix save_dir=$save_dir nsteps=5
+		mkdir -p $save_dir/$r/$k
+		for s in {1..2}
+		do
+			python3 code/transfer_multi_eval.py seed=$s k=$k r=$r obs_name1=$dataset1$suffix obs_name2=$dataset2$suffix save_dir=$save_dir/$r/$k nsteps=5
+		done
 	done
 done
+
+
 
 # python3 code/digest_transfer_multi_eval.py
