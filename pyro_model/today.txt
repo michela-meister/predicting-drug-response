@@ -15,16 +15,23 @@ X calculate correlation / concordance (look up what is used in paper): pearson, 
 X scatter plots btwn datasets
 X plot distribution of values
 ===========================================================
-- implement running (k, r) on multiple seeds
+X save dataset of means (and edit script to read this one in...)
+X save output to file
+- save as pearson correlation?
+- implement running on multiple seeds
+- save output to file & process output
+- implement varying k
+- implement varying r
 - write script to run grid
-- implement loss function --> use loss to cut-off run
 - run grid of r x k params (for both log and raw)
 - plot results
-- plot comparing output correlation to paper correlation (on same train/test)
+- compare output to correlation w overlap-auc (on same train/test)
+Q: implement loss function --> use loss to cut-off run
 ===========================================================
 - discuss w Wes
 - do k-fold cross val?
 - try with different sizes of test dataset
+- synthetic experiment??
 
 - dataset stats: sample-drug counts, matlab correlation plot, heatmap plot, number of duplicate readings
 - plot distribution of auc values, log(auc) for different datasets

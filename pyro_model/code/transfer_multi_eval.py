@@ -10,6 +10,7 @@ from pyro.infer import SVI, Trace_ELBO
 from pyro.infer.autoguide import AutoNormal
 from pyro.optim import Adam
 import seaborn as sns
+import sys
 
 import global_constants as const
 import model_helpers as modeling
@@ -207,12 +208,12 @@ def predict_mat2(s, d, w_row, w_col):
 	mat2 = np.matmul(s_prime, d)
 	return mat2
 
-def transfer_fit_k(seed, k, use_real_data, data_dir, obs_name1, obs_name2, r):
+def transfer_fit_k(seed, data_dir, k, r, obs_name1, obs_name2, n_steps):
     pyro.util.set_rng_seed(seed)
     pyro.clear_param_store()
     # get data
     # DO: edit data_fn and split data functions
-    data_fn = data_dir + '/rep-gdsc-ctd2-clean.csv'
+    data_fn = data_dir + '/rep-gdsc-ctd2-mean.csv'
     df = pd.read_csv(data_fn)
     n_samp = df['sample_id'].nunique()
     n_drug = df['drug_id'].nunique()
@@ -228,10 +229,11 @@ def transfer_fit_k(seed, k, use_real_data, data_dir, obs_name1, obs_name2, r):
     autoguide = AutoNormal(modeling.transfer_model)
     svi = SVI(modeling.transfer_model, autoguide, optimizer, loss=Trace_ELBO())
     losses = []
-    for step in tqdm.trange(NSTEPS):
+    for step in tqdm.trange(n_steps):
         svi.step(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, const.PARAMS, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
-        losses.append(svi.evaluate_loss(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, const.PARAMS, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k))
-
+        loss = svi.evaluate_loss(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, const.PARAMS, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
+        losses.append(loss)
+    print('FINAL LOSS DIFF: ' + str(losses[len(losses) - 1] - losses[len(losses) - 2]))
     # retrieve values out for s and d vectors
     s_loc = pyro.param("AutoNormal.locs.s").detach().numpy()
     s_scale = pyro.param("AutoNormal.scales.s").detach().numpy()
@@ -250,7 +252,7 @@ def transfer_fit_k(seed, k, use_real_data, data_dir, obs_name1, obs_name2, r):
     rsq_train = r_squared(train_means, obs_2.numpy())
     return rsq_test, rsq_train
 
-def main():
+def old_main():
 	# TODO: move hard-coded values to inputs & create all necessary directories
     data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
     use_real_data = 1
@@ -270,15 +272,26 @@ def main():
     	plot_histogram(test_fn, write_test_fn, k, use_real_data, obs_name)
     plot_avg(save_dir, save_dir, use_real_data, rank_list, len(seed_list))
 
-def starter():
-	seed = 0
-	k = 1
-	use_real_data = 1
+def get_args(args, n):
+	if len(args) != n + 1:
+		print('Expected ' + str(n + 1) + ' arguments, but got ' + str(len(args)))
+	seed = int(args[1].split("=")[1])
+	k = int(args[2].split("=")[1])
+	r = int(args[3].split("=")[1])
+	obs_name1 = args[4].split("=")[1]
+	obs_name2 = args[5].split("=")[1]
+	save_dir = args[6].split("=")[1]
+	n_steps = int(args[7].split("=")[1])
+	return seed, k, r, obs_name1, obs_name2, save_dir, n_steps
+
+def main():
+	seed, k, r, obs_name1, obs_name2, save_dir, n_steps = get_args(sys.argv, 7)
 	data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
-	obs_name1 = 'REP_auc_overlap'
-	obs_name2 = 'GDSC_auc_overlap'
-	r = 5
-	rsq_test, rsq_train = transfer_fit_k(seed, k, use_real_data, data_dir, obs_name1, obs_name2, r)
+	rsq_test, rsq_train = transfer_fit_k(seed, data_dir, k, r, obs_name1, obs_name2, n_steps)
+	train_fn = save_dir + '/' + str(seed) + '_rsq_train.txt'
+	test_fn = save_dir + '/' + str(seed) + '_rsq_test.txt'
+	np.savetxt(train_fn, np.array([rsq_train]))
+	np.savetxt(test_fn, np.array([rsq_test]))
 	print('rsq_test: ' + str(rsq_test))
 	print('rsq_train: ' + str(rsq_train))
 
@@ -287,4 +300,4 @@ def starter():
 # save to file
 
 if __name__ == "__main__":
-    starter()
+    main()
