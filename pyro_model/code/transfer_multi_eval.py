@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pickle
 import pyro
 import pyro.distributions as dist
 import pyro.util
@@ -288,12 +289,12 @@ def main():
 	seed, k, r, obs_name1, obs_name2, save_dir, n_steps = get_args(sys.argv, 7)
 	data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
 	rsq_test, rsq_train = transfer_fit_k(seed, data_dir, k, r, obs_name1, obs_name2, n_steps)
-	train_fn = save_dir + '/' + str(seed) + '_rsq_train.txt'
-	test_fn = save_dir + '/' + str(seed) + '_rsq_test.txt'
-	np.savetxt(train_fn, np.array([rsq_train]))
-	np.savetxt(test_fn, np.array([rsq_test]))
+	save_fn = save_dir + '/' + str(seed) + '.pkl'
 	print('rsq_test: ' + str(rsq_test))
 	print('rsq_train: ' + str(rsq_train))
+	vals_dict = {'seed': seed, 'k': k, 'r': r, 'obs_name1': obs_name1, 'obs_name2': obs_name2, 'n_steps': n_steps, 'rsq_train': rsq_train, 'rsq_test': rsq_test}
+	with open(save_fn, 'wb') as handle:
+		pickle.dump(vals_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # for a set seed, r, k, fn: fit the model
 # compute rsq_test, rsq_train: between predict and original
