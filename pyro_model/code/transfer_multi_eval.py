@@ -209,8 +209,8 @@ def predict_mat2(s, d, w_row, w_col):
 	mat2 = np.matmul(s_prime, d)
 	return mat2
 
-def transfer_fit_k(seed, data_dir, k, r, obs_name1, obs_name2, n_steps):
-    pyro.util.set_rng_seed(seed)
+def transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2, n_steps):
+    pyro.util.set_rng_seed(split_seed)
     pyro.clear_param_store()
     # get data
     # DO: edit data_fn and split data functions
@@ -225,6 +225,7 @@ def transfer_fit_k(seed, data_dir, k, r, obs_name1, obs_name2, n_steps):
     s_idx2, d_idx2, obs_2 = get_obs_info(train_df, obs_name2)
     s_test_idx, d_test_idx, obs_test = get_obs_info(test_df, obs_name2)
     # fit model
+    pyro.util.set_rng_seed(model_seed)
     adam_params = {"lr": 0.05}
     optimizer = Adam(adam_params)
     autoguide = AutoNormal(modeling.transfer_model)
@@ -276,23 +277,24 @@ def old_main():
 def get_args(args, n):
 	if len(args) != n + 1:
 		print('Expected ' + str(n + 1) + ' arguments, but got ' + str(len(args)))
-	seed = int(args[1].split("=")[1])
-	k = int(args[2].split("=")[1])
-	r = int(args[3].split("=")[1])
-	obs_name1 = args[4].split("=")[1]
-	obs_name2 = args[5].split("=")[1]
-	save_dir = args[6].split("=")[1]
-	n_steps = int(args[7].split("=")[1])
-	return seed, k, r, obs_name1, obs_name2, save_dir, n_steps
+	split_seed = int(args[1].split("=")[1])
+	model_seed = int(args[2].split("=")[1])
+	k = int(args[3].split("=")[1])
+	r = int(args[4].split("=")[1])
+	obs_name1 = args[5].split("=")[1]
+	obs_name2 = args[6].split("=")[1]
+	save_dir = args[7].split("=")[1]
+	n_steps = int(args[8].split("=")[1])
+	return split_seed, model_seed, k, r, obs_name1, obs_name2, save_dir, n_steps
 
 def main():
-	seed, k, r, obs_name1, obs_name2, save_dir, n_steps = get_args(sys.argv, 7)
+	split_seed, model_seed, k, r, obs_name1, obs_name2, save_dir, n_steps = get_args(sys.argv, 8)
 	data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
-	rsq_test, rsq_train = transfer_fit_k(seed, data_dir, k, r, obs_name1, obs_name2, n_steps)
-	save_fn = save_dir + '/' + str(seed) + '.pkl'
+	rsq_test, rsq_train = transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2, n_steps)
+	save_fn = save_dir + '/' + str(model_seed) + '.pkl'
 	print('rsq_test: ' + str(rsq_test))
 	print('rsq_train: ' + str(rsq_train))
-	vals_dict = {'seed': seed, 'k': k, 'r': r, 'obs_name1': obs_name1, 'obs_name2': obs_name2, 'n_steps': n_steps, 'rsq_train': rsq_train, 'rsq_test': rsq_test}
+	vals_dict = {'split_seed': split_seed, 'model_seed': model_seed, 'k': k, 'r': r, 'obs_name1': obs_name1, 'obs_name2': obs_name2, 'n_steps': n_steps, 'rsq_train': rsq_train, 'rsq_test': rsq_test}
 	with open(save_fn, 'wb') as handle:
 		pickle.dump(vals_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
