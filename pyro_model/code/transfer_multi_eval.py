@@ -181,6 +181,10 @@ def r_squared(means, test):
 	r = pearson_corr[0, 1]
 	return np.power(r, 2)
 
+def pearson_corr(means, test):
+	pearson_corr = np.corrcoef(test, means)
+	return pearson_corr[0, 1]
+
 def ranks(rank_list, seed_list, use_real_data, data_dir, save_dir, obs_name):
 	for k in rank_list:
 		round_k(seed_list, k, use_real_data, data_dir, save_dir, obs_name)
@@ -203,10 +207,13 @@ def get_r_squared(s_loc, d_loc, s_idx, d_idx, obs):
 	rsq = r_squared(means, obs)
 	return rsq
 
-def predict_mat2(s, d, w_row, w_col):
+def predict_mat2(s, d, w_row, w_col, k, r):
 	W = np.matmul(np.transpose(w_col), w_row)
-	s_prime = np.matmul(W, np.transpose(s))
-	mat2 = np.matmul(s_prime, d)
+	# s already comes transposed, as defined in model
+	assert s.shape[0] == k
+	assert W.shape[0] == k and W.shape[0] == k
+	s_prime = np.matmul(W, s) 
+	mat2 = np.matmul(np.transpose(s_prime), d)
 	return mat2
 
 def transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2, n_steps):
@@ -232,8 +239,8 @@ def transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2,
     svi = SVI(modeling.transfer_model, autoguide, optimizer, loss=Trace_ELBO())
     losses = []
     for step in tqdm.trange(n_steps):
-        svi.step(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, const.PARAMS, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
-        loss = svi.evaluate_loss(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, const.PARAMS, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
+        svi.step(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
+        loss = svi.evaluate_loss(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
         losses.append(loss)
     print('FINAL LOSS DIFF: ' + str(losses[len(losses) - 1] - losses[len(losses) - 2]))
     # retrieve values out for s and d vectors
@@ -245,14 +252,14 @@ def transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2,
     w_row_loc = pyro.param("AutoNormal.locs.w_row").detach().numpy()
     w_col_loc = pyro.param("AutoNormal.locs.w_col").detach().numpy()
     # predict function: takes in w_row, w_col, s, d --> mat2
-    mat2 = predict_mat2(s_loc, d_loc, w_row_loc, w_col_loc)
+    mat2 = predict_mat2(s_loc, d_loc, w_row_loc, w_col_loc, k, r)
     # eval test rsq
     test_means = mat2[s_test_idx, d_test_idx]
-    rsq_test = r_squared(test_means, obs_test.numpy())
+    corr_test = pearson_corr(test_means, obs_test.numpy())
     # eval train rsq
     train_means = mat2[s_idx2, d_idx2]
-    rsq_train = r_squared(train_means, obs_2.numpy())
-    return rsq_test, rsq_train
+    corr_train = pearson_corr(train_means, obs_2.numpy())
+    return corr_test, corr_train
 
 def old_main():
 	# TODO: move hard-coded values to inputs & create all necessary directories
@@ -290,11 +297,11 @@ def get_args(args, n):
 def main():
 	split_seed, model_seed, k, r, obs_name1, obs_name2, save_dir, n_steps = get_args(sys.argv, 8)
 	data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
-	rsq_test, rsq_train = transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2, n_steps)
+	corr_test, corr_train = transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2, n_steps)
 	save_fn = save_dir + '/' + str(model_seed) + '.pkl'
-	print('rsq_test: ' + str(rsq_test))
-	print('rsq_train: ' + str(rsq_train))
-	vals_dict = {'split_seed': split_seed, 'model_seed': model_seed, 'k': k, 'r': r, 'obs_name1': obs_name1, 'obs_name2': obs_name2, 'n_steps': n_steps, 'rsq_train': rsq_train, 'rsq_test': rsq_test}
+	print('corr_test: ' + str(corr_test))
+	print('corr_train: ' + str(corr_train))
+	vals_dict = {'split_seed': split_seed, 'model_seed': model_seed, 'k': k, 'r': r, 'obs_name1': obs_name1, 'obs_name2': obs_name2, 'n_steps': n_steps, 'corr_train': corr_train, 'corr_test': corr_test}
 	with open(save_fn, 'wb') as handle:
 		pickle.dump(vals_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
