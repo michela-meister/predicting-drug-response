@@ -16,36 +16,11 @@ def get_args(args, n):
 	seed_max = int(args[4].split("=")[1])
 	return data_dir, r_max, k_max, seed_max
 
-def retrieve_rsq_results():
-	# read in args
-	data_dir, r_max, k_max, seed_max = get_args(sys.argv, 4)
-	train_rsq_arr = np.ones((r_max, k_max)) * np.inf 
-	test_rsq_arr = np.ones((r_max, k_max)) * np.inf
-	# get starting directory name
-	for r in range(1, r_max + 1):
-		for k in range(1, k_max + 1):
-			rsq_train = []
-			rsq_test = []
-			for seed in range(1, seed_max + 1):
-				fn = data_dir + '/' + str(r) + '/' + str(k) + '/' + str(seed) + '.pkl'
-				vals_dict = read_pickle(fn)
-				assert r == vals_dict['r']
-				assert k == vals_dict['k']
-				assert seed == vals_dict['seed']
-				rsq_train.append(vals_dict['rsq_train'])
-				rsq_test.append(vals_dict['rsq_test'])
-			train_rsq_arr[r-1, k-1] = np.mean(np.array(rsq_train))
-			test_rsq_arr[r-1, k-1] = np.mean(np.array(rsq_test))
-	assert np.sum(np.sum(train_rsq_arr == np.inf)) == 0
-	assert np.sum(np.sum(test_rsq_arr == np.inf)) == 0
-	np.savetxt(data_dir + '/train_rsq_arr.txt', train_rsq_arr)
-	np.savetxt(data_dir + '/test_rsq_arr.txt', test_rsq_arr)
-
 def retrieve_corr_results():
 	# read in args
 	data_dir, r_max, k_max, seed_max = get_args(sys.argv, 4)
-	train_corr_arr = np.ones((r_max, k_max)) * np.inf 
-	test_corr_arr = np.ones((r_max, k_max)) * np.inf
+	train_corr_arr = np.ones((k_max, k_max)) * np.inf 
+	test_corr_arr = np.ones((k_max, k_max)) * np.inf
 	# get starting directory name
 	for r in range(1, r_max + 1):
 		for k in range(1, k_max + 1):
@@ -61,8 +36,6 @@ def retrieve_corr_results():
 				corr_test.append(vals_dict['corr_test'])
 			train_corr_arr[r-1, k-1] = np.mean(np.array(corr_train))
 			test_corr_arr[r-1, k-1] = np.mean(np.array(corr_test))
-	assert np.sum(np.sum(train_rsq_arr == np.inf)) == 0
-	assert np.sum(np.sum(test_rsq_arr == np.inf)) == 0
 	np.savetxt(data_dir + '/train_corr_arr.txt', train_corr_arr)
 	np.savetxt(data_dir + '/test_corr_arr.txt', test_corr_arr)
 

@@ -1,17 +1,12 @@
-X re-write code to digest results
-X recreate plots
-- run code on cluster for all combinations, and @ 50 model-restarts per seed
-- digest these results into figures 
-- add confidence intervals to plots
-- insert plots into ppt
-=================================================================
-- re-write code so that it's easy to read
-- write intro & exit ppt slides
-
-Further Tasks for Future Results:
-=================================================================
-- write code to run single-dataset outcomes on cluster
-- write code so that you vary the number of datapoints used
-- run this code and digest it into plots
-- insert plots into ppt
-=================================================================
+X write script to run heatmap experiments
+X find script currently using to digest results (including m, getting the averages, etc)
+X update script to digest heatmap experiments: finish adding mask checks
+X write digest_heatmap.sh
+X add analysis to digest_heatmap.py
+X test files locally
+X copy files to cluster
+- debug digest results: run on dummy array of same size, but with indices as values to see where processing goes wrong
+- on cluster, run test (short) heatmap experiment: test run & digest/processing --- use prime numbers for dimensions!
+- load data into jupyter notebook and play around
+- run heatmap on one pair --> determine general parameters to run
+- create scripts for all pairs to run
