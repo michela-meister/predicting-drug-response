@@ -21,23 +21,6 @@ def write_to_pickle(obj, fn):
     with open(fn, 'wb') as handle:
         pickle.dump(obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-def compute_mask_4d(k_max, s_max, m_max):
-    arr = np.zeros((k_max, k_max, s_max, m_max)).astype(bool)
-    for k in range(0, k_max):
-        for r in range(0, k):
-            for s in range(0, s_max):
-                for m in range(0, m_max):
-                    arr[r, k, s, m] = True
-    return arr
-
-def compute_mask_3d(k_max, s_max):
-    arr = np.zeros((k_max, k_max, s_max)).astype(bool)
-    for k in range(0, k_max):
-        for r in range(0, k):
-            for s in range(0, s_max):
-                arr[r, k, s] = True
-    return arr
-
 def compute_mask_2d(k_max):
     arr = np.zeros((k_max, k_max)).astype(bool)
     for k in range(0, k_max):
@@ -45,28 +28,17 @@ def compute_mask_2d(k_max):
             arr[r, k] = True
     return arr
 
-def compute_mask(arr, k_max, s_max, m_max):
-    dims = len(arr.shape)
-    if dims == 4:
-        return compute_mask_4d(k_max, s_max, m_max)
-    elif dims == 3:
-        return compute_mask_3d(k_max, s_max)
-    elif dims == 2:
-        return compute_mask_2d(k_max)
-    else:
-        print('Error! dims should be in {2, 3, 4}.')
-
 def check_for_missing_entries(arr, k_max, s_max, m_max):
-    mask = compute_mask(arr, k_max, s_max, m_max)
+    mask = compute_mask_2d(k_max)
     assert arr.shape == mask.shape
     dims = len(arr.shape)
-    missing = arr[mask] == -1
+    missing = arr[mask] == -np.inf
     for i in range(0, dims):
         missing = np.sum(missing)
     assert missing == 0
 
 def read_results(eval_type, data_dir, k_max, s_max, m_max):
-    arr = np.ones((k_max, k_max, s_max, m_max)) * -1
+    arr = np.ones((k_max, k_max, s_max, m_max)) * -np.inf
     for k in range(1, k_max + 1):
         for r in range(1, k + 1):
             for s in range(1, s_max + 1):
@@ -80,29 +52,26 @@ def read_results(eval_type, data_dir, k_max, s_max, m_max):
                     else:
                         print('Error! Eval type must be train or test')
                     arr[r-1, k-1, s-1, m-1] = res
-    check_for_missing_entries(arr, k_max, s_max, m_max)
     return arr
 
 def select_models(arr):
     assert len(arr.shape) == 4
     k_dim, k_dim, s_dim, m_dim = arr.shape
-    model_idx = np.ones((k_dim, k_dim, s_dim)) * -1
+    model_idx = np.ones((k_dim, k_dim, s_dim)) * -np.inf
     for k in range(0, k_dim):
-        for r in range(0, k):
+        for r in range(0, k_dim):
             for s in range(0, s_dim):
                 model_idx[r, k, s] = np.argmax(arr[r, k, s, :])
-    check_for_missing_entries(model_idx, k_dim, s_dim, m_dim)
     return model_idx.astype(int)
 
 def index_into_models(arr, idx):
     assert len(arr.shape) == 4
     k_dim, k_dim, s_dim, m_dim = arr.shape
-    res = np.ones((k_dim, k_dim, s_dim)) * -1
+    res = np.ones((k_dim, k_dim, s_dim)) * -np.inf
     for k in range(0, k_dim):
-        for r in range(0, k):
+        for r in range(0, k_dim):
             for s in range(0, s_dim):
                 res[r, k, s] = arr[r, k, s, idx[r, k, s]]
-    check_for_missing_entries(res, k_dim, s_dim, m_dim)
     return res
 
 def compute_mean(arr, model_idx):

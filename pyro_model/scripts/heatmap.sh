@@ -9,9 +9,9 @@ save_dir=$day_dir/heatmap/$dataset1'_'$dataset2
 
 mkdir -p $save_dir
 
-k_max=2
-s_max=2
-m_max=2
+k_max=3
+s_max=1
+m_max=1
 
 for k in $(eval echo "{1..$k_max}")
 do
