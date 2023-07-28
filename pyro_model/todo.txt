@@ -7,8 +7,9 @@ X test files locally
 X copy files to cluster
 X OR: rewrite digest so that the indexing, mean, etc is done on all values; only process into a triangle at the end!
 X debug digest results: run on dummy array of same size, but with indices as values to see where processing goes wrong
-- copy digest_heatmap.py over to cluster
-- on cluster, run test (short) heatmap experiment: test run & digest/processing --- use prime numbers for dimensions!
+X copy digest_heatmap.py over to cluster
+X on cluster, run test (short) heatmap experiment: test run & digest/processing --- use prime numbers for dimensions!
+- run real experiment on cluster and digest
+- copy data over to local direcotry
 - load data into jupyter notebook and play around
-- run heatmap on one pair --> determine general parameters to run
-- create scripts for all pairs to run
+- ** save input params with test/train averages! **
