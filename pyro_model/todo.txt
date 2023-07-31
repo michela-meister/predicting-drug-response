@@ -1,15 +1,79 @@
-X write script to run heatmap experiments
-X find script currently using to digest results (including m, getting the averages, etc)
-X update script to digest heatmap experiments: finish adding mask checks
-X write digest_heatmap.sh
-X add analysis to digest_heatmap.py
-X test files locally
-X copy files to cluster
-X OR: rewrite digest so that the indexing, mean, etc is done on all values; only process into a triangle at the end!
-X debug digest results: run on dummy array of same size, but with indices as values to see where processing goes wrong
-X copy digest_heatmap.py over to cluster
-X on cluster, run test (short) heatmap experiment: test run & digest/processing --- use prime numbers for dimensions!
-- run real experiment on cluster and digest
-- copy data over to local direcotry
-- load data into jupyter notebook and play around
-- ** save input params with test/train averages! **
+MODEL SELECTION
+X create heatmap for train and test
+X create individual line plots (by r and k)
+X combine everything into a new digest_heatmap.py, and run on most recent cluster scripts
+===
+- save input params for script along with test/train averages: include r, k values! (incase not just range)
+- implement cross-validation holding out samples
+- implement switch between random-holdout and sample-holdout
+- implement data cleaning that does log(auc)
+- implement switch between auc and loc(auc)
+===
+- write pipeline to run model, post-process, and copy data back to local storage in 1 - 2 clicks!
+=============================================================
+- run on all pairs of datasets X {random-holdout, sample-holdout} X {auc, log(auc)}
+- post-process all data
+- choose the best model parameters
+=============================================================
+- discuss plots w Wes to choose parameters
+- Outcomes: 
+--- we know the best (r, k) to use for each dataset combination --> choose (r, k) peak
+--- we know whether to use auc or log(auc) or whether there is any difference
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PDX DATA
+- download all datafiles
+- clean data so that it can be processed by the model: may require fitting auc curves, getting data into T/C format
+- create cleaning + stats pipeline: clean, take logs, do normality tests, spit out basic stats
+- run pdx data through cleaning + stats pipeline
+- discuss results with Wes
+=============================================================
+- Outcome: Know whether this data works for our purposes
+
+PIPELINES
+- have full pipeline for cleaning, pre-processing/stats, and model selection. should result in final (r, k) value
+- run invitro data through cleaning + stats pipeline: may need separate pipeline
+
+DO MODEL SELECTION ON PDX DATA
+
+PREDICTING ON HELD-OUT SAMPLES: INVITRO
+
+PREDICTING ON HELD-OUT SAMPLES: PDO -> PDX
+
+COMPARISON TO NON-TRANSFER MODEL: INVITRO, PDO -> PDX
+- {random-holdout, sample-holdout}
+
+COSINE SIMILARITY OF DRUG EMBEDDINGS: INVITRO, PDO -> PDX
+
+CONTINUE WITH DRAFT (DAILY?)
+
+
+
