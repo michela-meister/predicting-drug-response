@@ -1,6 +1,8 @@
 #!/bin/bash
-cluster_dir=/work/tansey/meisterm/results/2023-07-31/heatmap/REP_GDSC
-local_dir='results/2023-07-31/heatmap/REP_GDSC'
+dataset1=$1
+dataset2=$2
+cluster_dir=$3/log_$dataset1'_'$dataset2
+local_dir=$4/log_$dataset1'_'$dataset2
 
 mkdir -p $local_dir
 

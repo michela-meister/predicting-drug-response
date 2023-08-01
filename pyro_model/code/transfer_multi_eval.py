@@ -221,7 +221,7 @@ def transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2,
     pyro.clear_param_store()
     # get data
     # DO: edit data_fn and split data functions
-    data_fn = data_dir + '/rep-gdsc-ctd2-mean.csv'
+    data_fn = data_dir + '/rep-gdsc-ctd2-mean-log.csv'
     df = pd.read_csv(data_fn)
     n_samp = df['sample_id'].nunique()
     n_drug = df['drug_id'].nunique()
@@ -261,26 +261,6 @@ def transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2,
     corr_train = pearson_corr(train_means, obs_2.numpy())
     return corr_test, corr_train
 
-def old_main():
-	# TODO: move hard-coded values to inputs & create all necessary directories
-    data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
-    use_real_data = 1
-    rank_list = range(1, NRANK + 1)
-    seed_list = range(0, NSEED)
-    save_dir = 'results/2023-07-13/multi_eval'
-    obs_name1 = 'REP_auc_overlap'
-    obs_name2 = 'GDSC_auc_overlap'
-    ranks(rank_list, seed_list, use_real_data, data_dir, save_dir, obs_name1, obs_name2)
-    # plot histograms - break this out into a separate function
-    for k in rank_list:
-    	train_fn = save_dir + '/r_squared_' + str(k) + '_train.txt'
-    	write_train_fn = save_dir + '/hist_' + str(k) + '_train.png'
-    	plot_histogram(train_fn, write_train_fn, k, use_real_data, obs_name)
-    	test_fn = save_dir + '/r_squared_' + str(k) + '_test.txt'
-    	write_test_fn = save_dir + '/hist_' + str(k) + '_test.png'
-    	plot_histogram(test_fn, write_test_fn, k, use_real_data, obs_name)
-    plot_avg(save_dir, save_dir, use_real_data, rank_list, len(seed_list))
-
 def get_args(args, n):
 	if len(args) != n + 1:
 		print('Expected ' + str(n + 1) + ' arguments, but got ' + str(len(args)))
@@ -292,11 +272,12 @@ def get_args(args, n):
 	obs_name2 = args[6].split("=")[1]
 	save_dir = args[7].split("=")[1]
 	n_steps = int(args[8].split("=")[1])
-	return split_seed, model_seed, k, r, obs_name1, obs_name2, save_dir, n_steps
+	data_dir = args[9].split("=")[1]
+	return split_seed, model_seed, k, r, obs_name1, obs_name2, save_dir, n_steps, data_dir
 
 def main():
-	split_seed, model_seed, k, r, obs_name1, obs_name2, save_dir, n_steps = get_args(sys.argv, 8)
-	data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
+	split_seed, model_seed, k, r, obs_name1, obs_name2, save_dir, n_steps, data_dir = get_args(sys.argv, 9)
+	#data_dir = '~/Documents/research/tansey/msk_intern/pyro_model/data'
 	corr_test, corr_train = transfer_fit_k(split_seed, model_seed, data_dir, k, r, obs_name1, obs_name2, n_steps)
 	save_fn = save_dir + '/' + str(model_seed) + '.pkl'
 	print('corr_test: ' + str(corr_test))

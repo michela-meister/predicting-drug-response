@@ -3,15 +3,21 @@ X create heatmap for train and test
 X create individual line plots (by r and k)
 X combine everything into a new digest_heatmap.py, and run on most recent cluster scripts
 ===
-- save input params for script along with test/train averages: include r, k values! (incase not just range)
+X write out python script to clean data (clean_dataset.py)
+X implement data cleaning that does log(auc)
+X pass log_ prefix into script!
+X write pipeline to run model, post-process, and copy data back to local storage in 1 - 2 clicks!
+===
+X test locally on small sample
+- copy all scripts over to cluster 
+- test on small sample
+- run pipeline on all pairs of datasets w log(auc) & random-holdout
+===
 - implement cross-validation holding out samples
 - implement switch between random-holdout and sample-holdout
-- implement data cleaning that does log(auc)
-- implement switch between auc and loc(auc)
 ===
-- write pipeline to run model, post-process, and copy data back to local storage in 1 - 2 clicks!
 =============================================================
-- run on all pairs of datasets X {random-holdout, sample-holdout} X {auc, log(auc)}
+- run on all pairs of datasets w/ sample-holdout & log(auc)
 - post-process all data
 - choose the best model parameters
 =============================================================

@@ -1,9 +1,16 @@
 #!/bin/bash
-day_dir=results/"$(date +"%Y-%m-%d")"
-base_dir=results/2023-06-13/clean_and_split_data
-save_dir=$day_dir/pipeline
+dataset1=REP
+dataset2=GDSC
+prefix='log_'
+suffix='_published_auc_mean'
+n_steps=5
+k_max=3
+s_max=1
+m_max=1
+data_dir='~/Documents/research/tansey/msk_intern/pyro_model/data'
+save_dir=results/"$(date +"%Y-%m-%d")"/dummy/heatmap/$prefix$dataset1'_'$dataset2
 
-mkdir -p $save_dir
-mkdir -p $base_dir/split
 
-python3 code/pipeline.py data_fn=$base_dir n_total_obs=-1 n_mcmc=200 n_warmup=500 n_iter=3 thinning=100 directory=$save_dir use_real_data=1 k=2
+sh ./scripts/clean_dataset.sh $data_dir $data_dir
+sh ./scripts/heatmap.sh $dataset1 $dataset2 $prefix $suffix $n_steps $k_max $s_max $m_max $data_dir $save_dir
+
