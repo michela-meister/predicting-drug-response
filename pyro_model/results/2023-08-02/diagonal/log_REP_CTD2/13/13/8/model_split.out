@@ -1,0 +1,460 @@
+FINAL LOSS DIFF: 44.447509765625
+corr_test: 0.8236208533625519
+corr_train: 0.8604082270370875
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ji03>
+Subject: Job 67467316: </work/tansey/meisterm/scripts/heatmap_input.sh 8 2 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 2 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <ji03>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:03 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:03 2023
+Terminated at Wed Aug  2 16:02:50 2023
+Results reported at Wed Aug  2 16:02:50 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 2 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   40.76 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                77
+    Run time :                                   46 sec.
+    Turnaround time :                            499 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+
+FINAL LOSS DIFF: -146.89404296875
+corr_test: 0.8230395153534881
+corr_train: 0.8612244207296785
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ji01>
+Subject: Job 67467315: </work/tansey/meisterm/scripts/heatmap_input.sh 8 1 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 1 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <ji01>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:02 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:02 2023
+Terminated at Wed Aug  2 16:02:52 2023
+Results reported at Wed Aug  2 16:02:52 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 1 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   44.07 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                77
+    Run time :                                   50 sec.
+    Turnaround time :                            501 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+
+FINAL LOSS DIFF: -61.583251953125
+corr_test: 0.8272393204408693
+corr_train: 0.8599509294441464
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ji05>
+Subject: Job 67467317: </work/tansey/meisterm/scripts/heatmap_input.sh 8 3 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 3 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <ji05>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:03 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:03 2023
+Terminated at Wed Aug  2 16:02:54 2023
+Results reported at Wed Aug  2 16:02:54 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 3 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   47.60 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                77
+    Run time :                                   51 sec.
+    Turnaround time :                            503 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+
+FINAL LOSS DIFF: 335.12939453125
+corr_test: 0.822344257327937
+corr_train: 0.8564801592831986
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@jh10>
+Subject: Job 67467323: </work/tansey/meisterm/scripts/heatmap_input.sh 8 9 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 9 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <jh10>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:03 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:03 2023
+Terminated at Wed Aug  2 16:02:58 2023
+Results reported at Wed Aug  2 16:02:58 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 9 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   50.58 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                65
+    Run time :                                   55 sec.
+    Turnaround time :                            507 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+
+FINAL LOSS DIFF: 49.673828125
+corr_test: 0.8317997064140856
+corr_train: 0.8592392645485485
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@jh03>
+Subject: Job 67467322: </work/tansey/meisterm/scripts/heatmap_input.sh 8 8 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 8 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <jh03>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:03 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:03 2023
+Terminated at Wed Aug  2 16:03:05 2023
+Results reported at Wed Aug  2 16:03:05 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 8 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   56.84 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                65
+    Run time :                                   61 sec.
+    Turnaround time :                            514 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+
+FINAL LOSS DIFF: 59.58447265625
+corr_test: 0.8255994174199298
+corr_train: 0.8607465562198447
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ja10>
+Subject: Job 67467324: </work/tansey/meisterm/scripts/heatmap_input.sh 8 10 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 10 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <ja10>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:03 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:03 2023
+Terminated at Wed Aug  2 16:03:10 2023
+Results reported at Wed Aug  2 16:03:10 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 10 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   61.76 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                49
+    Run time :                                   66 sec.
+    Turnaround time :                            519 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+
+FINAL LOSS DIFF: 188.2021484375
+corr_test: 0.8250582213145897
+corr_train: 0.8583010050898852
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ja07>
+Subject: Job 67467319: </work/tansey/meisterm/scripts/heatmap_input.sh 8 5 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 5 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <ja07>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:03 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:03 2023
+Terminated at Wed Aug  2 16:03:15 2023
+Results reported at Wed Aug  2 16:03:15 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 5 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   71.15 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                49
+    Run time :                                   72 sec.
+    Turnaround time :                            524 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+
+FINAL LOSS DIFF: 127.39111328125
+corr_test: 0.8250572974838902
+corr_train: 0.8590882104870999
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@je10>
+Subject: Job 67467321: </work/tansey/meisterm/scripts/heatmap_input.sh 8 7 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 7 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <je10>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:03 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:03 2023
+Terminated at Wed Aug  2 16:03:22 2023
+Results reported at Wed Aug  2 16:03:22 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 7 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   75.26 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                53
+    Run time :                                   80 sec.
+    Turnaround time :                            531 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+
+FINAL LOSS DIFF: -12.01708984375
+corr_test: 0.8238180114235931
+corr_train: 0.8591640152704098
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ja02>
+Subject: Job 67467320: </work/tansey/meisterm/scripts/heatmap_input.sh 8 6 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 6 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <ja02>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:03 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:03 2023
+Terminated at Wed Aug  2 16:03:24 2023
+Results reported at Wed Aug  2 16:03:24 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 6 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   75.94 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                49
+    Run time :                                   81 sec.
+    Turnaround time :                            533 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+
+FINAL LOSS DIFF: 234.60595703125
+corr_test: 0.8213602096033369
+corr_train: 0.8560675230382537
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ja04>
+Subject: Job 67467318: </work/tansey/meisterm/scripts/heatmap_input.sh 8 4 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> in cluster <juno> Done
+
+Job </work/tansey/meisterm/scripts/heatmap_input.sh 8 4 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data> was submitted from host <juno> by user <meisterm> in cluster <juno> at Wed Aug  2 15:54:31 2023
+Job was executed on host(s) <ja04>, in queue <general>, as user <meisterm> in cluster <juno> at Wed Aug  2 16:02:03 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Wed Aug  2 16:02:03 2023
+Terminated at Wed Aug  2 16:03:28 2023
+Results reported at Wed Aug  2 16:03:28 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/scripts/heatmap_input.sh 8 4 13 13 REP_published_auc_mean CTD2_published_auc_mean /work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8 1000 /work/tansey/meisterm/data
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   80.42 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                49
+    Run time :                                   86 sec.
+    Turnaround time :                            537 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-02/diagonal/log_REP_CTD2/13/13/8/model_split.err> for stderr output of this job.
+

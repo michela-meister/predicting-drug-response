@@ -49,6 +49,12 @@ def split_by_pairs(df, col1, col2, train_pairs, test_pairs):
     assert set(train_df['pair']).isdisjoint(set(test_df['pair']))
     return train_df, test_df
 
+def split_from_fold(df, fold_fn, model_seed):
+	# read in split (list of arrays) from fold
+	# index into arrays with model_seed to get fold
+	# return train, test based on fold
+	return train_df, test_df
+
 def split_train_test(df):
     col1 = 'sample_id'
     col2 = 'drug_id'
