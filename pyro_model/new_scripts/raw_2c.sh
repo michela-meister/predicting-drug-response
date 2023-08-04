@@ -18,6 +18,7 @@ do
 	do
 		echo "$fold"
 		writeDir="$baseDir/log_$source""_""$target/$fold"
+		mkdir -p "$writeDir"
 		raw.sh "$codeDir" "$dataFile" "$foldFile" "$writeDir" "$source" "$target" "$fold" "$holdoutFrac" 
 	done
 done
