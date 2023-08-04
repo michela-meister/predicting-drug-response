@@ -1,10 +1,6 @@
 import pickle
 
-def check_args(args, N):
-	if len(args) != N:
-		print('Error! Expected ' + str(N) + ' arguments, but got ' + str(len(args)))
-
-def write_to_pickle(obj, fn):
+def write_pickle(obj, fn):
     with open(fn, 'wb') as handle:
         pickle.dump(obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
