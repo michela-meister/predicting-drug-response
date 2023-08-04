@@ -66,15 +66,18 @@ def pairs_from_samples(df, sample_ids):
     return test_rows['pair'].to_numpy()
 
 def fold_split(df, fold_fn, split_seed):
-    fold_list = helpers.read_pickle(fold_fn)
-    # list of sample ids to hold out
-    samples = list(fold_list[split_seed])
+    fold_list = read_pickle(fold_fn)
+    # split_seed is 1-indexed, but fold_list is 0-indexed --> subtract 1 off
+    samples = list(fold_list[split_seed - 1])
     # get all pairs corresponding to a set of samples
     train_df = df.loc[~df.sample_id.isin(samples)].drop_duplicates()
     train_pairs = list(zip(train_df['sample_id'], train_df['drug_id']))
     test_df = df.loc[df.sample_id.isin(samples)].drop_duplicates()
     test_pairs = list(zip(test_df['sample_id'], test_df['drug_id']))
+    # check that train and test split pairs correctly
     assert set(train_pairs).isdisjoint(set(test_pairs))
+    df_pairs = list(zip(df['sample_id'], df['drug_id']))
+    assert set(train_pairs).union(set(test_pairs)) == set(df_pairs)
     return train_pairs, test_pairs
 
 # returns the list of (sample, drug) pairs in the test set
@@ -106,5 +109,6 @@ def get_sample_drug_ids(df):
     return sd
 
 def pearson_correlation(vec1, vec2):
+    assert len(vec1) == len(vec2)
     pearson_corr = np.corrcoef(vec1, vec2)
     return pearson_corr[0, 1]

@@ -28,25 +28,47 @@ def get_raw_args(args, n):
     helpers.write_pickle(params, write_dir + '/params.pkl')
     return data_fn, fold_fn, write_dir, source_name, target_name, split_seed, holdout_frac
 
-def predict_raw(source_df, source_col, target_test_sd):
-    d = source_df.merge(target_test_sd, on=['sample_id', 'drug_id'], validate='one_to_one')
-    assert len(d) == len(target_test_sd)
+def predict_raw_helper(source_df, source_col, target_sd):
+    d = source_df.merge(target_sd, on=['sample_id', 'drug_id'], validate='one_to_one')
+    assert len(d) == len(target_sd)
     predictions = d[source_col].to_numpy()
     return predictions
 
-def evaluate_raw(predictions, target_test_df, target_col):
+def predict_raw(source_df, source_col, target_train_sd, target_test_sd):
+    train_predictions = predict_raw_helper(source_df, source_col, target_train_sd)
+    test_predictions = predict_raw_helper(source_df, source_col, target_test_sd)
+    return train_predict, test_predict
+
+def evaluate(predictions, target_test_df, target_col):
     test = target_test_df[target_col].to_numpy()
     return helpers.pearson_correlation(predictions, test)
 
 def main():
-    # get args
     data_fn, fold_fn, write_dir, source_name, target_name, split_seed, holdout_frac = get_raw_args(sys.argv, 7)
     source_col = 'log_' + source_name + '_published_auc_mean'
     target_col = 'log_' + target_name + '_published_auc_mean'
+    # Split dataset, get sample_ids and drug_ids for target
     source_df, target_train_df, target_test_df = helpers.get_source_and_target(data_fn, fold_fn, source_col, target_col, split_seed, holdout_frac)
     target_train_sd = helpers.get_sample_drug_ids(target_train_df)
     target_test_sd = helpers.get_sample_drug_ids(target_test_df)
-    # TODO: get test pairs from target_test_df
+    # ================================
+    # MAKE PREDICTIONS BY METHOD
+    if method == 'raw':
+        train_predict, test_predict = predict_raw(source_df, source_col, target_train_sd, target_test_sd)
+    elif method == 'transfer':
+        train_predict, test_predict = predict_transfer(source_df, source_col, target_train_df, target_col, target_train_sd, target_test_sd)
+    elif method == 'target-only':
+        train_predict, test_predict = predict_target_only(target_train_df, target_col, target_train_sd, target_test_sd)
+    else:
+        print('Error! Method must be one of: raw, transfer, target-only.')
+        return
+    # get model inputs
+    #### get indices
+    #### get obs vector
+    # zscore data --> return params
+    # fit model
+    # make predictions (take in zscore data for target_train)
+
     # in other files: 
     # get indices from source_df, target_train_df as well
     # zscore source_df and target_train_df
@@ -54,12 +76,10 @@ def main():
     # predict test results (note, these are still z-scored)
     #### using zscore mean from target_train_df, "inverse z_score" these predictions
     #### this should output a vector of test predictions
-    # make predictions
-    train_predictions = predict_raw(source_df, source_col, target_train_sd)
-    test_predictions = predict_raw(source_df, source_col, target_test_sd)
+    # ================================
     # evaluate predictions
-    train_corr = evaluate_raw(train_predictions, target_train_df, target_col)
-    test_corr = evaluate_raw(test_predictions, target_test_df, target_col)
+    train_corr = evaluate(train_predict, target_train_df, target_col)
+    test_corr = evaluate(test_predict, target_test_df, target_col)
     # save to file
     helpers.write_pickle(train_corr, write_dir + '/train.pkl')
     helpers.write_pickle(test_corr, write_dir + '/test.pkl')

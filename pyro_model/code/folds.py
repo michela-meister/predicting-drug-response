@@ -18,7 +18,7 @@ def get_fold_args(args, n):
 def get_folds(seed, sample_ids, n_folds):
     np.random.seed(seed)
     perm = np.random.permutation(sample_ids)
-    idx = np.round(np.linspace(0, len(sample_ids), n_folds)).astype(int)
+    idx = np.round(np.linspace(0, len(sample_ids), n_folds + 1)).astype(int)
     folds = []
     for i in range(0, len(idx) - 1):
         start = idx[i]
