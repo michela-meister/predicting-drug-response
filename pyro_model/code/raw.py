@@ -123,22 +123,29 @@ def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_i
     return train_means, test_means
 
 def predict_target_only(target_train_df, target_col, target_train_sd, target_test_sd):
-    # get model inputs --> return indices, obs vector
-    # zscore data --> return target_train params
-    # fit model --> return model_predictions
-    # inverse-zscore model_predictions --> return predictions
+    # FIT MODEL
+    pyro.clear_param_store()
+    pyro.util.set_rng_seed(model_seed)
+    adam_params = {"lr": 0.05}
+    optimizer = Adam(adam_params)
+    autoguide = AutoNormal(modeling.target_only_model)
+    svi = SVI(modeling.target_only_model, autoguide, optimizer, loss=Trace_ELBO())
+    losses = []
+    # TODO: Find / Replace!
+    for step in tqdm.trange(n_steps):
+        svi.step(n_samp, n_drug, s_idx, d_idx, params, obs, len(obs), k=k)
+        loss = svi.evaluate_loss(n_samp, n_drug, s_idx, d_idx, params, obs, len(obs), k=k)
+        losses.append(loss)
+    print('FINAL LOSS DIFF: ' + str(losses[len(losses) - 1] - losses[len(losses) - 2]))
+    # MAKE INITIAL PREDICTIONS BASED ON MODEL
+    # retrieve values out for s and d vectors
+    # retrieve values from matrix to make predictions!!
+    return train_means, test_means
+
     print('Run Target Only!')
     train_predict = np.random.randn(len(target_train_sd))
     test_predict = np.random.randn(len(target_test_sd))
     return train_predict, test_predict
-
-def zscore():
-    # TODO!!
-    return -1000, -1000
-
-def inverse_zscore(vec, mu, sigma):
-    # TODO!!!
-    return np.random.randn(len(vec))
 
 def evaluate(predictions, target_test_df, target_col):
     test = target_test_df[target_col].to_numpy()

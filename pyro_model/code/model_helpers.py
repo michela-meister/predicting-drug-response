@@ -87,23 +87,21 @@ def transfer_model(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs1=None, n_
         data2 = pyro.sample('data2', dist.Normal(mean2, sigma2 * torch.ones(n_obs2)), obs=obs2)
     # DO: create different vecs a, vecs sigma
 
-def vectorized_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None, k=1):
-    print('VECTORIZED!')
-    print('K = ' + str(k))
+def target_only_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None, k=1):
     if obs is None and n_obs is None:
         print('Error!: both obs and n_obs are None.')
     if obs is not None:
         n_obs = obs.shape[0]
     # create global offset
-    a_sigma = pyro.param('a_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
+    a_sigma = pyro.sample('a_sigma', dist.Gamma(ALPHA, BETA))
     a = pyro.sample('a', dist.Normal(0, a_sigma))   
     # create s
-    s_sigma = pyro.param('s_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
+    s_sigma = pyro.sample('s_sigma', dist.Gamma(ALPHA, BETA))
     with pyro.plate('s_plate', n_samp):
         with pyro.plate('k1', k):
             s = pyro.sample('s', dist.Normal(0, s_sigma))
     # create d
-    d_sigma = pyro.param('d_sigma', dist.Gamma(params['alpha'], params['beta']), constraint=constraints.positive)
+    d_sigma = pyro.sample('d_sigma', dist.Gamma(ALPHA, BETA))
     with pyro.plate('d_plate', n_drug):
         with pyro.plate('k2', k):
             d = pyro.sample('d', dist.Normal(0, d_sigma))
@@ -113,7 +111,7 @@ def vectorized_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None,
     mat = torch.matmul(s, d) # should be: n-samp x n-drug
     assert (mat.shape[0] == n_samp) and (mat.shape[1] == n_drug)
     mean = mat[s_idx, d_idx] + a
-    sigma = pyro.sample('sigma', dist.Gamma(params['alpha'], params['beta']))
+    sigma = pyro.sample('sigma', dist.Gamma(ALPHA, BETA))
     with pyro.plate('data_plate', n_obs):
         data = pyro.sample('data', dist.Normal(mean, sigma * torch.ones(n_obs)), obs=obs)
     return data
