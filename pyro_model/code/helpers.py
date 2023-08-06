@@ -68,7 +68,7 @@ def pairs_from_samples(df, sample_ids):
 def fold_split(df, fold_fn, split_seed):
     fold_list = read_pickle(fold_fn)
     # split_seed is 1-indexed, but fold_list is 0-indexed --> subtract 1 off
-    samples = list(fold_list[split_seed - 1])
+    samples = list(fold_list[split_seed])
     # get all pairs corresponding to a set of samples
     train_df = df.loc[~df.sample_id.isin(samples)].drop_duplicates()
     train_pairs = list(zip(train_df['sample_id'], train_df['drug_id']))
@@ -83,7 +83,7 @@ def fold_split(df, fold_fn, split_seed):
 # returns the list of (sample, drug) pairs in the test set
 def get_train_test_pairs(df, fold_fn, split_seed, holdout_frac):
     if fold_fn == "":
-        assert holdout_frac > 0 and holdout_frac <= 1
+        assert holdout_frac >= 0 and holdout_frac <= 1
         return random_split(df, split_seed, holdout_frac)
     else:
         return fold_split(df, fold_fn, split_seed)

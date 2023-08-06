@@ -1,11 +1,19 @@
 #!/bin/bash
 codeDir=$1
-dataFile=$2
-foldFile=$3
-writeDir=$4
-source=$5
-target=$6
-splitSeed=$7
-holdoutFrac=$8
+method=$2
+source=$3
+target=$4
+holdoutFrac=$5
+dataFile=$6
+writeDir=$7
+foldFile=$8
+hypFile=$9
+splitSeed=${10}
+modelSeed=${11}
+k=${12}
+r=${13}
 
-python3 "$codeDir"/raw.py dataFile="$dataFile" foldFile="$foldFile" writeDir="$writeDir" source="$source" target="$target" splitSeed="$splitSeed" holdoutFrac="$holdoutFrac"
+mkdir -p "$writeDir"
+
+python3 "$codeDir"/raw.py method="$method" source="$source" target="$target" holdoutFrac="$holdoutFrac" dataFile="$dataFile" writeDir="$writeDir" \
+foldFile="$foldFile" hypFile="$hypFile" splitSeed="$splitSeed" modelSeed="$modelSeed" k="$k" r="$r"

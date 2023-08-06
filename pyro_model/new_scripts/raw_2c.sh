@@ -1,13 +1,22 @@
 #!/bin/bash
+baseDir="results/$(date +%F)/raw_2c"
 scriptDir="new_scripts"
 codeDir="code"
+method="raw"
+source="REP"
+target="GDSC"
+holdoutFrac="-1"
 dataFile="data/rep-gdsc-ctd2-mean-log.csv"
 foldFile="fold_info/fold_list.pkl"
-baseDir="results/$(date +%F)/raw_2c"
-holdoutFrac=-1 # because doing k-fold
+hypFile=""
+# splitSeed is defined below, based on the fold
+modelSeed="-1"
+k="-1"
+r="-1"
 
 datasetPairs=("REP GDSC" "REP CTD2" "GDSC CTD2" "GDSC REP" "CTD2 GDSC" "CTD2 REP")
-maxFold=20
+numFolds=20
+lastFold="$(($numFolds-1))"
 
 for pair in "${datasetPairs[@]}"
 do
@@ -15,11 +24,13 @@ do
 	source="$1"
 	target="$2"
 	echo "$source" and "$target"
-	for fold in $(eval echo "{1..$maxFold}")
+	for fold in $(eval echo "{0..$lastFold}")
 	do
 		echo "$fold"
-		writeDir="$baseDir/log_$source""_""$target/$fold"
+		splitSeed="$fold"
+		writeDir="$baseDir""/""log""_""$source""_""$target""/""$fold"
 		mkdir -p "$writeDir"
-		"$scriptDir/"raw.sh "$codeDir" "$dataFile" "$foldFile" "$writeDir" "$source" "$target" "$fold" "$holdoutFrac" 
+		"$scriptDir/"raw.sh "$codeDir" "$method" "$source" "$target" "$holdoutFrac" "$dataFile" "$writeDir" "$foldFile" "$hypFile" \
+		"$splitSeed" "$modelSeed" "$k" "$r"
 	done
 done
