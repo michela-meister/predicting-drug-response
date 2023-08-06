@@ -1,11 +1,18 @@
 import numpy as np
 import pandas as pd
+import pyro
 import pyro.util
+from pyro.infer import SVI, Trace_ELBO
+from pyro.infer.autoguide import AutoNormal
+from pyro.optim import Adam
 import sys
+import torch
+import tqdm
 
 import helpers
+import model_helpers as modeling
 
-def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r):
+def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps):
     params = {}
     params['method'] = method
     params['source'] = source
@@ -19,15 +26,17 @@ def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_f
     params['model_seed'] = model_seed
     params['k'] = k
     params['r'] = r
+    params['n_steps'] = n_steps
     helpers.write_pickle(params, write_dir + '/params.pkl')
 
-def check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r):
+def check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps):
     assert method in ['raw', 'transfer', 'target_only']
     assert target in ['REP', 'GDSC', 'CTD2']
     assert (fold_fn != "") or (0 <= holdout_frac and holdout_frac <= 1)
     assert split_seed >= 0
     if method == 'raw':
         return
+    assert n_steps > 0
     assert model_seed >= 0
     assert hyp_fn != "" or k >= 0
     if method == 'target_only':
@@ -51,10 +60,11 @@ def get_raw_args(args, n):
     model_seed = int(args[10].split("=")[1])
     k = int(args[11].split("=")[1])
     r = int(args[12].split("=")[1])
+    n_steps = int(args[13].split("=")[1])
     # verify that params are valid for method given and save
-    check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r)
-    save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r)
-    return method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r
+    check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps)
+    save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps)
+    return method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps
 
 def predict_raw_helper(source_df, source_col, target_sd):
     d = source_df.merge(target_sd, on=['sample_id', 'drug_id'], validate='one_to_one')
@@ -67,15 +77,50 @@ def predict_raw(source_df, source_col, target_train_sd, target_test_sd):
     test_predict = predict_raw_helper(source_df, source_col, target_test_sd)
     return train_predict, test_predict
 
-def predict_transfer(source_df, source_col, target_train_df, target_col, target_train_sd, target_test_sd):
-    # get model inputs --> return indices, obs vector
-    # zscore data --> return target_train params
-    # fit model --> return model_predictions
-    # inverse-zscore model_predictions --> return predictions
-    print('Run Transfer!')
-    train_predict = np.random.randn(len(target_train_sd))
-    test_predict = np.random.randn(len(target_test_sd))
-    return train_predict, test_predict
+def predict_mat2(s, d, w_row, w_col, k, r):
+    W = np.matmul(np.transpose(w_col), w_row)
+    # s already comes transposed, as defined in model
+    assert s.shape[0] == k
+    assert W.shape[0] == k and W.shape[0] == k
+    s_prime = np.matmul(W, s) 
+    mat2 = np.matmul(np.transpose(s_prime), d)
+    return mat2
+
+def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k=1, r=1):
+    # FIT MODEL
+    pyro.clear_param_store()
+    pyro.util.set_rng_seed(model_seed)
+    adam_params = {"lr": 0.05}
+    optimizer = Adam(adam_params)
+    autoguide = AutoNormal(modeling.transfer_model)
+    svi = SVI(modeling.transfer_model, autoguide, optimizer, loss=Trace_ELBO())
+    losses = []
+    # TODO: Find / Replace!
+    s_idx1 = s_idx_src
+    d_idx1 = d_idx_src
+    obs_1 = obs_src
+    s_idx2 = s_idx_train
+    d_idx2 = d_idx_train
+    obs_2 = obs_train
+    s_test_idx = s_idx_test
+    d_test_idx = d_idx_test
+    for step in tqdm.trange(n_steps):
+        svi.step(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
+        loss = svi.evaluate_loss(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
+        losses.append(loss)
+    print('FINAL LOSS DIFF: ' + str(losses[len(losses) - 1] - losses[len(losses) - 2]))
+    # MAKE INITIAL PREDICTIONS BASED ON MODEL
+    # retrieve values out for s and d vectors
+    s_loc = pyro.param("AutoNormal.locs.s").detach().numpy()
+    d_loc = pyro.param("AutoNormal.locs.d").detach().numpy()
+    # need to retrive w_col, w_row and reconstruct s'!
+    w_row_loc = pyro.param("AutoNormal.locs.w_row").detach().numpy()
+    w_col_loc = pyro.param("AutoNormal.locs.w_col").detach().numpy()
+    # predict function: takes in w_row, w_col, s, d --> mat2
+    mat2 = predict_mat2(s_loc, d_loc, w_row_loc, w_col_loc, k, r)
+    train_means = mat2[s_idx2, d_idx2]
+    test_means = mat2[s_test_idx, d_test_idx]
+    return train_means, test_means
 
 def predict_target_only(target_train_df, target_col, target_train_sd, target_test_sd):
     # get model inputs --> return indices, obs vector
@@ -86,6 +131,14 @@ def predict_target_only(target_train_df, target_col, target_train_sd, target_tes
     train_predict = np.random.randn(len(target_train_sd))
     test_predict = np.random.randn(len(target_test_sd))
     return train_predict, test_predict
+
+def zscore():
+    # TODO!!
+    return -1000, -1000
+
+def inverse_zscore(vec, mu, sigma):
+    # TODO!!!
+    return np.random.randn(len(vec))
 
 def evaluate(predictions, target_test_df, target_col):
     test = target_test_df[target_col].to_numpy()
@@ -104,40 +157,48 @@ def get_column_names(method, source_name, target_name):
     target_col = prefix + target_name + suffix
     return source_col, target_col
 
+def obs_to_tensor(vec):
+    return torch.Tensor(vec)
+
 def main():
-    method, source_name, target_name, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r = get_raw_args(sys.argv, 12)
+    method, source_name, target_name, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps = get_raw_args(sys.argv, 13)
     source_col, target_col = get_column_names(method, source_name, target_name)
     # Split dataset, get sample_ids and drug_ids for target
-    source_df, target_train_df, target_test_df = helpers.get_source_and_target(data_fn, fold_fn, source_col, target_col, split_seed, holdout_frac)
+    source_df, target_train_df, target_test_df, n_samp, n_drug = helpers.get_source_and_target(data_fn, fold_fn, source_col, target_col, split_seed, holdout_frac)
     target_train_sd = helpers.get_sample_drug_ids(target_train_df)
     target_test_sd = helpers.get_sample_drug_ids(target_test_df)
     # ================================
     # MAKE PREDICTIONS BY METHOD
     if method == 'raw':
         train_predict, test_predict = predict_raw(source_df, source_col, target_train_sd, target_test_sd)
-    elif method == 'transfer':
-        train_predict, test_predict = predict_transfer(source_df, source_col, target_train_df, target_col, target_train_sd, target_test_sd)
-    elif method == 'target_only':
-        train_predict, test_predict = predict_target_only(target_train_df, target_col, target_train_sd, target_test_sd)
     else:
-        print('Error! Method must be one of: raw, transfer, target_only.')
-        return
-    # get model inputs
-    #### get indices
-    #### get obs vector
-    # zscore data --> return params
-    # fit model
-    # make predictions (take in zscore data for target_train)
-
-    # in other files: 
-    # get indices from source_df, target_train_df as well
-    # zscore source_df and target_train_df
-    # fit model
-    # predict test results (note, these are still z-scored)
-    #### using zscore mean from target_train_df, "inverse z_score" these predictions
-    #### this should output a vector of test predictions
+        # get target model inputs
+        s_idx_train, d_idx_train = helpers.get_sample_drug_indices(target_train_df)
+        s_idx_test, d_idx_test = helpers.get_sample_drug_indices(target_test_df)
+        obs_train = target_train_df[target_col].to_numpy()
+        mu, sigma, obs_train = helpers.zscore(obs_train)
+        obs_train = torch.Tensor(obs_train)
+        if method == 'target_only':
+            train_initial, test_initial = predict_target_only(target_train_df, target_col, target_train_sd, target_test_sd)
+        elif method == 'transfer':
+            # get source model inputs
+            s_idx_src, d_idx_src = helpers.get_sample_drug_indices(source_df)
+            obs_src = source_df[source_col].to_numpy()
+            _, _, obs_src = helpers.zscore(obs_src)
+            obs_src = torch.Tensor(obs_src)
+            # zscore source data
+            train_initial, test_initial = predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_idx_train, obs_train, s_idx_test, 
+                d_idx_test, n_samp, n_drug, n_steps=n_steps, k=k, r=r)
+        else:
+            print('Error! Method must be one of: raw, transfer, target_only.')
+            return
+        # invert zscore on both target_train and target_test predictions using target_train params
+        train_predict = helpers.inverse_zscore(train_initial, mu, sigma)
+        test_predict = helpers.inverse_zscore(test_initial, mu, sigma)
+    assert len(train_predict) == len(target_train_df)
+    assert len(test_predict) == len(target_test_df)
     # ================================
-    # evaluate predictions
+    # EVALUATE PREDICTIONS AND SAVE
     train_corr = evaluate(train_predict, target_train_df, target_col)
     test_corr = evaluate(test_predict, target_test_df, target_col)
     # save to file

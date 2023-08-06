@@ -10,15 +10,11 @@ def list_to_indices(keys):
     values = range(n_keys)
     return dict(zip(keys, values))
 
-def pearson_correlation(means, test):
-    pearson_corr = np.corrcoef(test, means)
-    return pearson_corr[0, 1]
-
-read_dir = sys.argv[1].split("=")[1]
+read_fn = sys.argv[1].split("=")[1]
 write_dir = sys.argv[2].split("=")[1]
 
 # read in dataset
-df = pd.read_csv(read_dir + '/rep-gdsc-ctd2.csv')
+df = pd.read_csv(read_fn)
 cols = ['Drug.Name', 'ccle', 'REP_published_auc', 'CTD2_published_auc', 'GDSC_published_auc', 'REP_auc_overlap', 'CTD2_auc_overlap', 'GDSC_auc_overlap']
 df = df[cols]
 # drop rows with nans
@@ -52,11 +48,8 @@ for col in data_cols:
 	df[log_col] = np.log2(df[mean_col])
 	log_cols.append(log_col)
 
-# standardize all data
-for col in mean_cols + log_cols:
-    df[col] = scipy.stats.zscore(df[col].to_numpy())
-
 # keep columns with averages
 df = df[id_cols + mean_cols + log_cols]
+assert len(df) == 16588
 # save to csv
 df.to_csv(write_dir + '/rep-gdsc-ctd2-mean-log.csv', index=False)

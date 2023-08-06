@@ -13,6 +13,7 @@ hypFile=""
 # modelSeed is defined below, based on iteration
 k="10" # arbitrary choide for k
 r="10" # arbitrary choide for r
+nSteps="5"
 
 datasetPairs=("REP GDSC" "REP CTD2" "GDSC CTD2" "GDSC REP" "CTD2 GDSC" "CTD2 REP")
 numFolds=20
@@ -35,7 +36,7 @@ do
 			writeDir="$baseDir""/""log""_""$source""_""$target""/""$fold""/""$modelSeed"
 			mkdir -p "$writeDir"
 			"$scriptDir/"raw.sh "$codeDir" "$method" "$source" "$target" "$holdoutFrac" "$dataFile" "$writeDir" "$foldFile" "$hypFile" \
-			"$splitSeed" "$modelSeed" "$k" "$r"
+			"$splitSeed" "$modelSeed" "$k" "$r" "$nSteps"
 		done
 	done
 done

@@ -13,6 +13,7 @@ hypFile=""
 modelSeed="-1"
 k="-1"
 r="-1"
+nSteps=5
 
 datasetPairs=("REP GDSC" "REP CTD2" "GDSC CTD2" "GDSC REP" "CTD2 GDSC" "CTD2 REP")
 numFolds=20
@@ -31,6 +32,6 @@ do
 		writeDir="$baseDir""/""log""_""$source""_""$target""/""$fold"
 		mkdir -p "$writeDir"
 		"$scriptDir/"raw.sh "$codeDir" "$method" "$source" "$target" "$holdoutFrac" "$dataFile" "$writeDir" "$foldFile" "$hypFile" \
-		"$splitSeed" "$modelSeed" "$k" "$r"
+		"$splitSeed" "$modelSeed" "$k" "$r" "$nSteps"
 	done
 done

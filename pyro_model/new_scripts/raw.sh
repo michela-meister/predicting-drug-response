@@ -12,8 +12,9 @@ splitSeed=${10}
 modelSeed=${11}
 k=${12}
 r=${13}
+nSteps=${14}
 
 mkdir -p "$writeDir"
 
 python3 "$codeDir"/raw.py method="$method" source="$source" target="$target" holdoutFrac="$holdoutFrac" dataFile="$dataFile" writeDir="$writeDir" \
-foldFile="$foldFile" hypFile="$hypFile" splitSeed="$splitSeed" modelSeed="$modelSeed" k="$k" r="$r"
+foldFile="$foldFile" hypFile="$hypFile" splitSeed="$splitSeed" modelSeed="$modelSeed" k="$k" r="$r" nSteps="$nSteps"

@@ -19,14 +19,6 @@ def get_unique_pairs(df, col1, col2):
     assert len(pairs) == len(set(pairs))
     return pairs
 
-def get_train_test_indices(pairs, n_train):
-    n_pairs = len(pairs)
-    idx = np.random.permutation(n_pairs)
-    train_idx = idx[:n_train]
-    test_idx = idx[n_train:]
-    assert set(train_idx).isdisjoint(set(test_idx))
-    return train_idx, test_idx
-
 def index_pairs(pairs, indices):
     p = np.array(pairs)
     idx = np.array(indices)
@@ -39,23 +31,19 @@ def split_by_pairs(df, col1, col2, train_pairs, test_pairs):
     assert set(train_df['pair']).isdisjoint(set(test_df['pair']))
     return train_df, test_df
 
-def split_train_test(df):
-    col1 = 'sample_id'
-    col2 = 'drug_id'
-    # get unique sample-drug pairs
-    pairs = get_unique_pairs(df, col1, col2)
-    n_train = int(np.ceil(len(pairs) * TRAIN_FRAC))
-    train_idx, test_idx = get_train_test_indices(pairs, n_train)
-    train_pairs = index_pairs(pairs, train_idx)
-    test_pairs = index_pairs(pairs, test_idx)
-    return split_by_pairs(df, col1, col2, train_pairs, test_pairs)
-
 def random_split(df, split_seed, holdout_frac):
-    pyro.util.set_rng_seed(split_seed)
     # get unique sample-drug pairs
-    pairs = get_unique_pairs(df, 'sample_id', 'drug_id')
+    a = df[['sample_id', 'drug_id']].drop_duplicates()
+    pairs = list(zip(a['sample_id'], a['drug_id']))
+    assert len(pairs) == len(set(pairs))
     n_train = int(np.ceil(len(pairs) * (1 - holdout_frac)))
-    train_idx, test_idx = get_train_test_indices(pairs, n_train)
+    # randomly permute indices of pairs, select train and test indices into pairs
+    pyro.util.set_rng_seed(split_seed)
+    idx = np.random.permutation(len(pairs))
+    train_idx = idx[:n_train]
+    test_idx = idx[n_train:]
+    assert set(train_idx).isdisjoint(set(test_idx))
+    # use randomly-permuted indices to index into pairs
     train_pairs = index_pairs(pairs, train_idx)
     test_pairs = index_pairs(pairs, test_idx)
     return train_pairs, test_pairs
@@ -96,11 +84,16 @@ def split_train_test(df, fold_fn, split_seed, holdout_frac):
 
 def get_source_and_target(data_fn, fold_fn, source_col, target_col, split_seed, holdout_frac):
     df = pd.read_csv(data_fn)
-    source_df = df[['sample_id', 'drug_id', source_col]].drop_duplicates()
+    assert len(df) == len(df.drop_duplicates())
+    n_samp = df.sample_id.nunique()
+    n_drug = df.drug_id.nunique()
+    source_df = df[['sample_id', 'drug_id', source_col]]
+    assert len(source_df) == len(df)
     train_df, test_df = split_train_test(df, fold_fn, split_seed, holdout_frac)
-    target_train_df = train_df[['sample_id', 'drug_id', target_col]].drop_duplicates()
-    target_test_df = test_df[['sample_id', 'drug_id', target_col]].drop_duplicates()
-    return source_df, target_train_df, target_test_df
+    target_train_df = train_df[['sample_id', 'drug_id', target_col]]
+    target_test_df = test_df[['sample_id', 'drug_id', target_col]]
+    assert len(target_train_df) + len(target_test_df) == len(df)
+    return source_df, target_train_df, target_test_df, n_samp, n_drug
 
 def get_sample_drug_ids(df):
     sd = df[['sample_id', 'drug_id']].drop_duplicates()
@@ -112,3 +105,17 @@ def pearson_correlation(vec1, vec2):
     assert len(vec1) == len(vec2)
     pearson_corr = np.corrcoef(vec1, vec2)
     return pearson_corr[0, 1]
+
+def get_sample_drug_indices(df):
+    s_idx = df['sample_id'].to_numpy()
+    d_idx = df['drug_id'].to_numpy()
+    return s_idx, d_idx
+
+def zscore(a):
+    mu = np.mean(a)
+    sigma = np.std(a)
+    res = (a - mu) / sigma
+    return mu, sigma, res
+
+def inverse_zscore(b, mu, sigma):
+    return (b * sigma) + mu
