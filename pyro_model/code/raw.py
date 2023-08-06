@@ -32,16 +32,22 @@ def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_f
 def check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps):
     assert method in ['raw', 'transfer', 'target_only']
     assert target in ['REP', 'GDSC', 'CTD2']
-    assert (fold_fn != "") or (0 <= holdout_frac and holdout_frac <= 1)
     assert split_seed >= 0
     if method == 'raw':
+        # raw can handle sample folds or random pairs
+        assert (fold_fn != "") or (0 <= holdout_frac and holdout_frac <= 1)
         return
     assert n_steps > 0
     assert model_seed >= 0
     assert hyp_fn != "" or k >= 0
     if method == 'target_only':
+        # target_only can't handle sample folds
+        assert fold_fn == "" 
+        assert 0 <= holdout_frac and holdout_frac <= 1
         return
     assert source in ['REP', 'GDSC', 'CTD2']
+    # transfer method can handle sample folds or random pairs
+    assert (fold_fn != "") or (0 <= holdout_frac and holdout_frac <= 1)
     assert hyp_fn != "" or r >= 0
 
 def get_raw_args(args, n):
@@ -77,7 +83,7 @@ def predict_raw(source_df, source_col, target_train_sd, target_test_sd):
     test_predict = predict_raw_helper(source_df, source_col, target_test_sd)
     return train_predict, test_predict
 
-def predict_mat2(s, d, w_row, w_col, k, r):
+def matrix_transfer(s, d, w_row, w_col, k, r):
     W = np.matmul(np.transpose(w_col), w_row)
     # s already comes transposed, as defined in model
     assert s.shape[0] == k
@@ -86,7 +92,7 @@ def predict_mat2(s, d, w_row, w_col, k, r):
     mat2 = np.matmul(np.transpose(s_prime), d)
     return mat2
 
-def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k=1, r=1):
+def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k, r):
     # FIT MODEL
     pyro.clear_param_store()
     pyro.util.set_rng_seed(model_seed)
@@ -117,12 +123,17 @@ def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_i
     w_row_loc = pyro.param("AutoNormal.locs.w_row").detach().numpy()
     w_col_loc = pyro.param("AutoNormal.locs.w_col").detach().numpy()
     # predict function: takes in w_row, w_col, s, d --> mat2
-    mat2 = predict_mat2(s_loc, d_loc, w_row_loc, w_col_loc, k, r)
-    train_means = mat2[s_idx2, d_idx2]
-    test_means = mat2[s_test_idx, d_test_idx]
+    mat = matrix_transfer(s_loc, d_loc, w_row_loc, w_col_loc, k, r)
+    train_means = mat[s_idx2, d_idx2]
+    test_means = mat[s_test_idx, d_test_idx]
     return train_means, test_means
 
-def predict_target_only(target_train_df, target_col, target_train_sd, target_test_sd):
+def matrix_target_only(s, d, k):
+    assert s.shape[0] == k
+    assert d.shape[0] == k
+    return np.matmul(np.transpose(s), d)
+
+def predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
     # FIT MODEL
     pyro.clear_param_store()
     pyro.util.set_rng_seed(model_seed)
@@ -132,20 +143,25 @@ def predict_target_only(target_train_df, target_col, target_train_sd, target_tes
     svi = SVI(modeling.target_only_model, autoguide, optimizer, loss=Trace_ELBO())
     losses = []
     # TODO: Find / Replace!
+    s_idx = s_idx_train
+    d_idx = d_idx_train
+    obs = obs_train
+    s_test_idx = s_idx_test
+    d_test_idx = d_idx_test
     for step in tqdm.trange(n_steps):
-        svi.step(n_samp, n_drug, s_idx, d_idx, params, obs, len(obs), k=k)
-        loss = svi.evaluate_loss(n_samp, n_drug, s_idx, d_idx, params, obs, len(obs), k=k)
+        # target_only_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None, k=1)
+        svi.step(n_samp, n_drug, s_idx, d_idx, obs, len(obs), k=k)
+        loss = svi.evaluate_loss(n_samp, n_drug, s_idx, d_idx, obs, len(obs), k=k)
         losses.append(loss)
     print('FINAL LOSS DIFF: ' + str(losses[len(losses) - 1] - losses[len(losses) - 2]))
     # MAKE INITIAL PREDICTIONS BASED ON MODEL
     # retrieve values out for s and d vectors
-    # retrieve values from matrix to make predictions!!
+    s_loc = pyro.param("AutoNormal.locs.s").detach().numpy()
+    d_loc = pyro.param("AutoNormal.locs.d").detach().numpy()
+    mat = matrix_target_only(s_loc, d_loc, k)
+    train_means = mat[s_idx, d_idx]
+    test_means = mat[s_test_idx, d_test_idx]
     return train_means, test_means
-
-    print('Run Target Only!')
-    train_predict = np.random.randn(len(target_train_sd))
-    test_predict = np.random.randn(len(target_test_sd))
-    return train_predict, test_predict
 
 def evaluate(predictions, target_test_df, target_col):
     test = target_test_df[target_col].to_numpy()
@@ -186,7 +202,7 @@ def main():
         mu, sigma, obs_train = helpers.zscore(obs_train)
         obs_train = torch.Tensor(obs_train)
         if method == 'target_only':
-            train_initial, test_initial = predict_target_only(target_train_df, target_col, target_train_sd, target_test_sd)
+            train_initial, test_initial = predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
         elif method == 'transfer':
             # get source model inputs
             s_idx_src, d_idx_src = helpers.get_sample_drug_indices(source_df)
@@ -195,7 +211,7 @@ def main():
             obs_src = torch.Tensor(obs_src)
             # zscore source data
             train_initial, test_initial = predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_idx_train, obs_train, s_idx_test, 
-                d_idx_test, n_samp, n_drug, n_steps=n_steps, k=k, r=r)
+                d_idx_test, n_samp, n_drug, n_steps, k, r)
         else:
             print('Error! Method must be one of: raw, transfer, target_only.')
             return
