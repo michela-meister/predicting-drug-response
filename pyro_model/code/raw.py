@@ -183,6 +183,35 @@ def get_column_names(method, source_name, target_name):
 def obs_to_tensor(vec):
     return torch.Tensor(vec)
 
+#def choose_k(train_df, method, split_type):
+    # split train_df into folds
+    # k_list = []
+    # for each fold:
+        # val = fold
+        # train = other folds
+        # result_list = []
+        # for each value of k:
+            # fit model using train, k, method
+            # evaluate model on val
+            # append val_corr to result_list
+        # opt_k = the value of k associated with the highest result in result_list
+        # k_list.append(opt_k)
+    # return average(k_list)
+
+# def predict_target_only():
+#     k_best = choose_k_target_only(target_train_df)
+#     train_means, test_means = fit_target_only_model()
+#     return train_means, test_means
+
+# def main():
+    # get raw args
+    # get column names
+    # train / test split
+    # k_best <---- choose_k: do 10-fold cross validation on train (iterating over every 5 k's)
+    # fit train using k_best
+    # evaluate on test
+    # save predictions
+
 def main():
     method, source_name, target_name, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps = get_raw_args(sys.argv, 13)
     source_col, target_col = get_column_names(method, source_name, target_name)
