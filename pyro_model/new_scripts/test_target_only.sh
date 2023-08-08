@@ -1,7 +1,7 @@
 #!/bin/bash
 codeDir="code"
 method="target_only"
-source="REP"
+source=""
 target="GDSC"
 holdoutFrac=".8"
 dataFile="data/rep-gdsc-ctd2-mean-log.csv"

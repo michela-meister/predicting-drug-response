@@ -31,7 +31,7 @@ def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_f
 
 def check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps):
     assert method in ['raw', 'transfer', 'target_only']
-    assert target in ['REP', 'GDSC', 'CTD2']
+    assert target in ['REP', 'GDSC', 'CTD2', 'synth']
     assert split_seed >= 0
     if method == 'raw':
         # raw can handle sample folds or random pairs
@@ -187,12 +187,13 @@ def main():
     method, source_name, target_name, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps = get_raw_args(sys.argv, 13)
     source_col, target_col = get_column_names(method, source_name, target_name)
     # Split dataset, get sample_ids and drug_ids for target
-    source_df, target_train_df, target_test_df, n_samp, n_drug = helpers.get_source_and_target(data_fn, fold_fn, source_col, target_col, split_seed, holdout_frac)
+    target_train_df, target_test_df, n_samp, n_drug = helpers.get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac)
     target_train_sd = helpers.get_sample_drug_ids(target_train_df)
     target_test_sd = helpers.get_sample_drug_ids(target_test_df)
     # ================================
     # MAKE PREDICTIONS BY METHOD
     if method == 'raw':
+        source_df = helpers.get_source(data_fn, fold_fn, source_col)
         train_predict, test_predict = predict_raw(source_df, source_col, target_train_sd, target_test_sd)
     else:
         # get target model inputs
@@ -205,6 +206,7 @@ def main():
             train_initial, test_initial = predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
         elif method == 'transfer':
             # get source model inputs
+            source_df = helpers.get_source(data_fn, fold_fn, source_col)
             s_idx_src, d_idx_src = helpers.get_sample_drug_indices(source_df)
             obs_src = source_df[source_col].to_numpy()
             _, _, obs_src = helpers.zscore(obs_src)

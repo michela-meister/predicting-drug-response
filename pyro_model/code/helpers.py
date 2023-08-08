@@ -82,18 +82,23 @@ def split_train_test(df, fold_fn, split_seed, holdout_frac):
     train_df, test_df = split_by_pairs(df, 'sample_id', 'drug_id', train_pairs, test_pairs)
     return train_df, test_df
 
-def get_source_and_target(data_fn, fold_fn, source_col, target_col, split_seed, holdout_frac):
+def get_source(data_fn, fold_fn, source_col):
+    df = pd.read_csv(data_fn)
+    assert len(df) == len(df.drop_duplicates())
+    source_df = df[['sample_id', 'drug_id', source_col]]
+    assert len(source_df) == len(df)
+    return source_df
+
+def get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac):
     df = pd.read_csv(data_fn)
     assert len(df) == len(df.drop_duplicates())
     n_samp = df.sample_id.nunique()
     n_drug = df.drug_id.nunique()
-    source_df = df[['sample_id', 'drug_id', source_col]]
-    assert len(source_df) == len(df)
     train_df, test_df = split_train_test(df, fold_fn, split_seed, holdout_frac)
     target_train_df = train_df[['sample_id', 'drug_id', target_col]]
     target_test_df = test_df[['sample_id', 'drug_id', target_col]]
     assert len(target_train_df) + len(target_test_df) == len(df)
-    return source_df, target_train_df, target_test_df, n_samp, n_drug
+    return target_train_df, target_test_df, n_samp, n_drug
 
 def get_sample_drug_ids(df):
     sd = df[['sample_id', 'drug_id']].drop_duplicates()

@@ -16,8 +16,8 @@ import pyro.distributions.constraints as constraints
 
 import helpers
 
-ALPHA = 10
-BETA = 2
+ALPHA = .01
+BETA = .01
     
 def get_model_inputs(train_fn, sample_fn, drug_fn):
     df = pd.read_pickle(train_fn)
