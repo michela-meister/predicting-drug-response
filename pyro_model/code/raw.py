@@ -13,7 +13,10 @@ import tqdm
 import helpers
 import model_helpers as modeling
 
-K_LIST = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+#K_LIST = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+#N_MODELS = 10
+
+N_MODELS = 2
 
 def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type):
     params = {}
@@ -138,7 +141,7 @@ def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_i
     test_means = mat[s_test_idx, d_test_idx]
     return train_means, test_means
 
-def predict_transfer_wrapper(model_seed, source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
+def run_predict_transfer(model_seed, source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
     s_idx_train, d_idx_train = helpers.get_sample_drug_indices(target_train_df)
     obs_train = target_train_df[target_col].to_numpy()
     mu, sigma, obs_train = helpers.zscore(obs_train)
@@ -154,6 +157,16 @@ def predict_transfer_wrapper(model_seed, source_df, source_col, target_train_df,
     assert len(train_predict) == len(s_idx_train)
     assert len(test_predict) == len(s_idx_test)
     return train_predict, test_predict
+
+def predict_transfer_wrapper(source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
+    train_predict_list = []
+    test_predict_list = []
+    for model_seed in range(0, N_MODELS):
+        train_predict, test_predict = run_predict_transfer(model_seed, source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, 
+            n_drug, n_steps, k)
+        train_predict_list.append(train_predict)
+        test_predict_list.append(test_predict)
+    return train_predict_list, test_predict_list
 
 def matrix_target_only(s, d, k):
     assert s.shape[0] == k
@@ -176,7 +189,6 @@ def predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_t
     s_test_idx = s_idx_test
     d_test_idx = d_idx_test
     for step in tqdm.trange(n_steps):
-        # target_only_model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None, k=1)
         svi.step(n_samp, n_drug, s_idx, d_idx, obs, len(obs), k=k)
         loss = svi.evaluate_loss(n_samp, n_drug, s_idx, d_idx, obs, len(obs), k=k)
         losses.append(loss)
@@ -190,7 +202,7 @@ def predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_t
     test_means = mat[s_test_idx, d_test_idx]
     return train_means, test_means
 
-def predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
+def run_predict_target_only(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
     s_idx_train, d_idx_train = helpers.get_sample_drug_indices(target_train_df)
     obs_train = target_train_df[target_col].to_numpy()
     mu, sigma, obs_train = helpers.zscore(obs_train)
@@ -202,11 +214,35 @@ def predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_t
     assert len(test_predict) == len(s_idx_test)
     return train_predict, test_predict
 
-#def predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+def predict_target_only_wrapper(target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
+    train_predict_list = []
+    test_predict_list = []
+    for model_seed in range(0, N_MODELS):
+        train_predict, test_predict = run_predict_target_only(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+        train_predict_list.append(train_predict)
+        test_predict_list.append(test_predict)
+    return train_predict_list, test_predict_list
 
-def evaluate(predictions, target_test_df, target_col):
-    test = target_test_df[target_col].to_numpy()
+def evaluate_correlation(predictions, df, col):
+    test = df[col].to_numpy()
     return helpers.pearson_correlation(predictions, test)
+
+def evaluate(train_predict_list, test_predict_list, target_train_df, target_test_df, target_col):
+    assert len(train_predict_list) == len(test_predict_list)
+    n_models = len(train_predict_list)
+    train_corr_list = []
+    test_corr_list = []
+    for i in range(0, N_MODELS):
+        train_corr = evaluate_correlation(train_predict_list[i], target_train_df, target_col)
+        test_corr = evaluate_correlation(test_predict_list[i], target_test_df, target_col)
+        train_corr_list.append(train_corr)
+        test_corr_list.append(test_corr)
+    idx = np.argmax(train_corr_list)
+    train_result = train_corr_list[idx]
+    test_result = test_corr_list[idx]
+    train_predictions = train_predict_list[idx]
+    test_predictions = test_predict_list[idx]
+    return train_result, test_result, train_predictions, test_predictions
 
 # Returns column names in dataset for given method
 def get_column_names(method, source_name, target_name):
@@ -240,7 +276,7 @@ def choose_k(method, df, split_type, source_df=None):
             # fit model using train, k, method, val_idx
             # val_corr = evaluate model on val
             # get best test value out of 10 model restarts running predict
-            predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+            train_predict_list, val_predict_list = predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
             val_corr_list.append(val_corr)
         # save the value of k associated with the highest validation correlation
         opt_k = val_corr_list[np.argmax(val_corr_list)] 
@@ -258,29 +294,35 @@ def main():
         target_train_sd = helpers.get_sample_drug_ids(target_train_df)
         target_test_sd = helpers.get_sample_drug_ids(target_test_df)
         source_df = helpers.get_source(data_fn, source_col)
-        train_predict, test_predict = predict_raw(source_df, source_col, target_train_sd, target_test_sd)
+        train_predictions, test_predictions = predict_raw(source_df, source_col, target_train_sd, target_test_sd)
+        train_corr = evaluate_correlation(train_predictions, target_train_df, target_col)
+        test_corr = evaluate_correlation(test_predictions, target_test_df, target_col)
     elif method == 'target_only':
         s_idx_test, d_idx_test = helpers.get_sample_drug_indices(target_test_df)
+        # TODO!
         #k = choose_k('target_only', ...)
         # ACTUALLY NEED TO RUN THE BELOW ON 10 MODEL RESTARTS!
-        train_predict, test_predict = predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+        train_predict_list, test_predict_list = predict_target_only_wrapper(target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+        train_corr, test_corr, train_predictions, test_predictions = evaluate(train_predict_list, test_predict_list, target_train_df, target_test_df, target_col)
     elif method == 'transfer':
         s_idx_test, d_idx_test = helpers.get_sample_drug_indices(target_test_df)
         source_df = helpers.get_source(data_fn, source_col)
+        # TODO!
         #k = choose_k('transfer', ...)
         # ACTUALLY NEED TO RUN THE BELOW ON 10 MODEL RESTARTS!
-        train_predict, test_predict = predict_transfer_wrapper(model_seed, source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, 
+        train_predict_list, test_predict_list = predict_transfer_wrapper(source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, 
             n_drug, n_steps, k)
+        train_corr, test_corr, train_predictions, test_predictions = evaluate(train_predict_list, test_predict_list, target_train_df, target_test_df, target_col)
     else:
         print('Error! Method must be one of: raw, transfer, target_only.')
         return
     # ================================
     # EVALUATE PREDICTIONS AND SAVE
-    train_corr = evaluate(train_predict, target_train_df, target_col)
-    test_corr = evaluate(test_predict, target_test_df, target_col)
     # save to file
     helpers.write_pickle(train_corr, write_dir + '/train.pkl')
     helpers.write_pickle(test_corr, write_dir + '/test.pkl')
+    # TODO: save predictions!!
+
     print('train_corr: ' + str(train_corr))
     print('test_corr: ' + str(test_corr))
 
