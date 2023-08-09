@@ -306,6 +306,11 @@ def choose_k(method, target_train_df, target_col, split_type, n_samp, n_drug, n_
         opt_k_list.append(opt_k)
     return int(np.mean(opt_k_list))
 
+def save_predictions(write_fn, predictions, df):
+    assert len(predictions) == len(df)
+    d = {'predictions': predictions, 'sample_ids': df['sample_id'].to_numpy(), 'drug_id': df['drug_id'].to_numpy()}
+    helpers.write_pickle(d, write_fn)
+
 def main():
     method, source_name, target_name, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type = get_raw_args(sys.argv, 13)
     source_col, target_col = get_column_names(method, source_name, target_name)
@@ -337,6 +342,8 @@ def main():
     # save to file
     helpers.write_pickle(train_corr, write_dir + '/train.pkl')
     helpers.write_pickle(test_corr, write_dir + '/test.pkl')
+    save_predictions(write_dir + '/train_predictions.pkl', train_predictions, target_train_df)
+    save_predictions(write_dir + '/test_predictions.pkl', test_predictions, target_test_df)
     # TODO: save predictions!!
 
     print('train_corr: ' + str(train_corr))
