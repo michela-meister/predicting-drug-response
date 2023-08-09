@@ -5,6 +5,7 @@ import pyro.util
 from pyro.infer import SVI, Trace_ELBO
 from pyro.infer.autoguide import AutoNormal
 from pyro.optim import Adam
+from sklearn.model_selection import KFold
 import sys
 import torch
 import tqdm
@@ -12,7 +13,9 @@ import tqdm
 import helpers
 import model_helpers as modeling
 
-def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps):
+K_LIST = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+
+def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type):
     params = {}
     params['method'] = method
     params['source'] = source
@@ -27,9 +30,10 @@ def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_f
     params['k'] = k
     params['r'] = r
     params['n_steps'] = n_steps
+    params['split_type'] = split_type
     helpers.write_pickle(params, write_dir + '/params.pkl')
 
-def check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps):
+def check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type):
     assert method in ['raw', 'transfer', 'target_only']
     assert target in ['REP', 'GDSC', 'CTD2', 'synth']
     assert split_seed >= 0
@@ -37,17 +41,18 @@ def check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_se
         # raw can handle sample folds or random pairs
         assert (fold_fn != "") or (0 <= holdout_frac and holdout_frac <= 1)
         return
+    assert split_type in ['random_split', 'sample_split']
     assert n_steps > 0
     assert model_seed >= 0
     assert hyp_fn != "" or k >= 0
     if method == 'target_only':
         # target_only can't handle sample folds
-        assert fold_fn == "" 
+        assert split_type == 'random_split' 
         assert 0 <= holdout_frac and holdout_frac <= 1
         return
     assert source in ['REP', 'GDSC', 'CTD2']
     # transfer method can handle sample folds or random pairs
-    assert (fold_fn != "") or (0 <= holdout_frac and holdout_frac <= 1)
+    assert (split_type == 'sample_split' and fold_fn != "") or ((split_type == 'random_split') and (0 <= holdout_frac and holdout_frac <= 1))
     assert hyp_fn != "" or r >= 0
 
 def get_raw_args(args, n):
@@ -67,10 +72,15 @@ def get_raw_args(args, n):
     k = int(args[11].split("=")[1])
     r = int(args[12].split("=")[1])
     n_steps = int(args[13].split("=")[1])
+    # get split type
+    if fold_fn == "":
+        split_type = 'random_split'
+    else:
+        split_type = 'sample_split'
     # verify that params are valid for method given and save
-    check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps)
-    save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps)
-    return method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps
+    check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type)
+    save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type)
+    return method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type
 
 def predict_raw_helper(source_df, source_col, target_sd):
     d = source_df.merge(target_sd, on=['sample_id', 'drug_id'], validate='one_to_one')
@@ -128,6 +138,23 @@ def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_i
     test_means = mat[s_test_idx, d_test_idx]
     return train_means, test_means
 
+def predict_transfer_wrapper(model_seed, source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
+    s_idx_train, d_idx_train = helpers.get_sample_drug_indices(target_train_df)
+    obs_train = target_train_df[target_col].to_numpy()
+    mu, sigma, obs_train = helpers.zscore(obs_train)
+    obs_train = torch.Tensor(obs_train)
+    s_idx_src, d_idx_src = helpers.get_sample_drug_indices(source_df)
+    obs_src = source_df[source_col].to_numpy()
+    _, _, obs_src = helpers.zscore(obs_src)
+    obs_src = torch.Tensor(obs_src)
+    train_initial, test_initial = predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_idx_train, obs_train, s_idx_test, 
+        d_idx_test, n_samp, n_drug, n_steps, k, k)
+    train_predict = helpers.inverse_zscore(train_initial, mu, sigma)
+    test_predict = helpers.inverse_zscore(test_initial, mu, sigma)
+    assert len(train_predict) == len(s_idx_train)
+    assert len(test_predict) == len(s_idx_test)
+    return train_predict, test_predict
+
 def matrix_target_only(s, d, k):
     assert s.shape[0] == k
     assert d.shape[0] == k
@@ -163,6 +190,20 @@ def predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_t
     test_means = mat[s_test_idx, d_test_idx]
     return train_means, test_means
 
+def predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
+    s_idx_train, d_idx_train = helpers.get_sample_drug_indices(target_train_df)
+    obs_train = target_train_df[target_col].to_numpy()
+    mu, sigma, obs_train = helpers.zscore(obs_train)
+    obs_train = torch.Tensor(obs_train)
+    train_initial, test_initial = predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+    train_predict = helpers.inverse_zscore(train_initial, mu, sigma)
+    test_predict = helpers.inverse_zscore(test_initial, mu, sigma)
+    assert len(train_predict) == len(s_idx_train)
+    assert len(test_predict) == len(s_idx_test)
+    return train_predict, test_predict
+
+#def predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+
 def evaluate(predictions, target_test_df, target_col):
     test = target_test_df[target_col].to_numpy()
     return helpers.pearson_correlation(predictions, test)
@@ -183,74 +224,56 @@ def get_column_names(method, source_name, target_name):
 def obs_to_tensor(vec):
     return torch.Tensor(vec)
 
-#def choose_k(train_df, method, split_type):
-    # split train_df into folds
-    # k_list = []
-    # for each fold:
-        # val = fold
-        # train = other folds
-        # result_list = []
-        # for each value of k:
-            # fit model using train, k, method
-            # evaluate model on val
-            # append val_corr to result_list
-        # opt_k = the value of k associated with the highest result in result_list
-        # k_list.append(opt_k)
-    # return average(k_list)
-
-# def predict_target_only():
-#     k_best = choose_k_target_only(target_train_df)
-#     train_means, test_means = fit_target_only_model()
-#     return train_means, test_means
-
-# def main():
-    # get raw args
-    # get column names
-    # train / test split
-    # k_best <---- choose_k: do 10-fold cross validation on train (iterating over every 5 k's)
-    # fit train using k_best
-    # evaluate on test
-    # save predictions
+def choose_k(method, df, split_type, source_df=None):
+    if method == 'target_only':
+        assert split_type == 'random_split'
+    # get data (either pairs or samples) based on split_type
+    X = get_items_to_split(df, split_type)
+    opt_k_list = []
+    kf = KFold(n_splits=10, random_state=707, shuffle=True)
+    kf.get_n_splits(X)
+    for i, (train_index, val_index) in enumerate(kf.split(X)):
+        train_df, val_df = split_dataframe(df, 'sample_id', 'drug_id', X, split_type, train_index, val_index)
+        val_corr_list = []
+        for k in K_LIST:
+            # predict_target_only / predict_transfer
+            # fit model using train, k, method, val_idx
+            # val_corr = evaluate model on val
+            # get best test value out of 10 model restarts running predict
+            predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+            val_corr_list.append(val_corr)
+        # save the value of k associated with the highest validation correlation
+        opt_k = val_corr_list[np.argmax(val_corr_list)] 
+        opt_k_list.append(opt_k)
+    return np.mean(opt_k_list)
 
 def main():
-    method, source_name, target_name, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps = get_raw_args(sys.argv, 13)
+    method, source_name, target_name, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type = get_raw_args(sys.argv, 13)
     source_col, target_col = get_column_names(method, source_name, target_name)
-    # Split dataset, get sample_ids and drug_ids for target
-    target_train_df, target_test_df, n_samp, n_drug = helpers.get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac)
-    target_train_sd = helpers.get_sample_drug_ids(target_train_df)
-    target_test_sd = helpers.get_sample_drug_ids(target_test_df)
+    # Split target dataset into train and test, get number of samples and drugs in dataset
+    target_train_df, target_test_df, n_samp, n_drug = helpers.get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac, split_type)
     # ================================
     # MAKE PREDICTIONS BY METHOD
     if method == 'raw':
-        source_df = helpers.get_source(data_fn, fold_fn, source_col)
+        target_train_sd = helpers.get_sample_drug_ids(target_train_df)
+        target_test_sd = helpers.get_sample_drug_ids(target_test_df)
+        source_df = helpers.get_source(data_fn, source_col)
         train_predict, test_predict = predict_raw(source_df, source_col, target_train_sd, target_test_sd)
-    else:
-        # get target model inputs
-        s_idx_train, d_idx_train = helpers.get_sample_drug_indices(target_train_df)
+    elif method == 'target_only':
         s_idx_test, d_idx_test = helpers.get_sample_drug_indices(target_test_df)
-        obs_train = target_train_df[target_col].to_numpy()
-        mu, sigma, obs_train = helpers.zscore(obs_train)
-        obs_train = torch.Tensor(obs_train)
-        if method == 'target_only':
-            train_initial, test_initial = predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
-        elif method == 'transfer':
-            # get source model inputs
-            source_df = helpers.get_source(data_fn, fold_fn, source_col)
-            s_idx_src, d_idx_src = helpers.get_sample_drug_indices(source_df)
-            obs_src = source_df[source_col].to_numpy()
-            _, _, obs_src = helpers.zscore(obs_src)
-            obs_src = torch.Tensor(obs_src)
-            # zscore source data
-            train_initial, test_initial = predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_idx_train, obs_train, s_idx_test, 
-                d_idx_test, n_samp, n_drug, n_steps, k, r)
-        else:
-            print('Error! Method must be one of: raw, transfer, target_only.')
-            return
-        # invert zscore on both target_train and target_test predictions using target_train params
-        train_predict = helpers.inverse_zscore(train_initial, mu, sigma)
-        test_predict = helpers.inverse_zscore(test_initial, mu, sigma)
-    assert len(train_predict) == len(target_train_df)
-    assert len(test_predict) == len(target_test_df)
+        #k = choose_k('target_only', ...)
+        # ACTUALLY NEED TO RUN THE BELOW ON 10 MODEL RESTARTS!
+        train_predict, test_predict = predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+    elif method == 'transfer':
+        s_idx_test, d_idx_test = helpers.get_sample_drug_indices(target_test_df)
+        source_df = helpers.get_source(data_fn, source_col)
+        #k = choose_k('transfer', ...)
+        # ACTUALLY NEED TO RUN THE BELOW ON 10 MODEL RESTARTS!
+        train_predict, test_predict = predict_transfer_wrapper(model_seed, source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, 
+            n_drug, n_steps, k)
+    else:
+        print('Error! Method must be one of: raw, transfer, target_only.')
+        return
     # ================================
     # EVALUATE PREDICTIONS AND SAVE
     train_corr = evaluate(train_predict, target_train_df, target_col)
