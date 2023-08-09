@@ -1,4 +1,5 @@
 #!/bin/bash
+date
 codeDir="code"
 method="transfer"
 source="REP"
@@ -19,3 +20,4 @@ mkdir -p "$writeDir"
 
 python3 "$codeDir"/raw.py method="$method" source="$source" target="$target" holdoutFrac="$holdoutFrac" dataFile="$dataFile" writeDir="$writeDir" \
 foldFile="$foldFile" hypFile="$hypFile" splitSeed="$splitSeed" modelSeed="$modelSeed" k="$k" r="$r" nSteps="$nSteps"
+date

@@ -10,13 +10,19 @@ import sys
 import torch
 import tqdm
 
+import cross_val
 import helpers
 import model_helpers as modeling
 
+# Real values
 #K_LIST = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
 #N_MODELS = 10
+#N_SPLITS = 10
 
+# Test Values
+K_LIST = [5, 10]
 N_MODELS = 2
+N_SPLITS = 2
 
 def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type):
     params = {}
@@ -106,6 +112,7 @@ def matrix_transfer(s, d, w_row, w_col, k, r):
     return mat2
 
 def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k, r):
+    print('Transfer, k: ' + str(k) + ', r: ' + str(r))
     # FIT MODEL
     pyro.clear_param_store()
     pyro.util.set_rng_seed(model_seed)
@@ -127,7 +134,6 @@ def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_i
         svi.step(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
         loss = svi.evaluate_loss(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
         losses.append(loss)
-    print('FINAL LOSS DIFF: ' + str(losses[len(losses) - 1] - losses[len(losses) - 2]))
     # MAKE INITIAL PREDICTIONS BASED ON MODEL
     # retrieve values out for s and d vectors
     s_loc = pyro.param("AutoNormal.locs.s").detach().numpy()
@@ -174,6 +180,7 @@ def matrix_target_only(s, d, k):
     return np.matmul(np.transpose(s), d)
 
 def predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
+    print('Target only, k: ' + str(k))
     # FIT MODEL
     pyro.clear_param_store()
     pyro.util.set_rng_seed(model_seed)
@@ -192,7 +199,6 @@ def predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_t
         svi.step(n_samp, n_drug, s_idx, d_idx, obs, len(obs), k=k)
         loss = svi.evaluate_loss(n_samp, n_drug, s_idx, d_idx, obs, len(obs), k=k)
         losses.append(loss)
-    print('FINAL LOSS DIFF: ' + str(losses[len(losses) - 1] - losses[len(losses) - 2]))
     # MAKE INITIAL PREDICTIONS BASED ON MODEL
     # retrieve values out for s and d vectors
     s_loc = pyro.param("AutoNormal.locs.s").detach().numpy()
@@ -260,28 +266,45 @@ def get_column_names(method, source_name, target_name):
 def obs_to_tensor(vec):
     return torch.Tensor(vec)
 
-def choose_k(method, df, split_type, source_df=None):
+def choose_k(method, target_train_df, target_col, split_type, n_samp, n_drug, n_steps, source_df=None, source_col=None):
+    print('Choose k via cross validation')
+    assert method in ['target_only', 'transfer']
+    assert split_type in ['random_split', 'sample_split']
     if method == 'target_only':
         assert split_type == 'random_split'
+    if method == 'transfer':
+        assert source_df is not None
+        assert source_col is not None
     # get data (either pairs or samples) based on split_type
-    X = get_items_to_split(df, split_type)
+    X = cross_val.get_items_to_split(target_train_df, split_type)
     opt_k_list = []
-    kf = KFold(n_splits=10, random_state=707, shuffle=True)
+    kf = KFold(n_splits=N_SPLITS, random_state=707, shuffle=True)
     kf.get_n_splits(X)
     for i, (train_index, val_index) in enumerate(kf.split(X)):
-        train_df, val_df = split_dataframe(df, 'sample_id', 'drug_id', X, split_type, train_index, val_index)
+        print("Fold: " + str(i + 1))
+        train_df, val_df = cross_val.split_dataframe(target_train_df, 'sample_id', 'drug_id', X, split_type, train_index, val_index)
+        train_corr_list = []
         val_corr_list = []
         for k in K_LIST:
-            # predict_target_only / predict_transfer
-            # fit model using train, k, method, val_idx
-            # val_corr = evaluate model on val
-            # get best test value out of 10 model restarts running predict
-            train_predict_list, val_predict_list = predict_target_only_wrapper(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+            s_idx_val, d_idx_val = helpers.get_sample_drug_indices(val_df)
+            print('Run ' + str(N_MODELS) + ' model restarts')
+            if method == 'target_only':
+                train_predict_list, val_predict_list = predict_target_only_wrapper(train_df, target_col, s_idx_val, d_idx_val, n_samp, n_drug, n_steps, k)
+            elif method == 'transfer':
+                train_predict_list, val_predict_list = predict_transfer_wrapper(source_df, source_col, train_df, target_col, s_idx_val, d_idx_val, n_samp, 
+                    n_drug, n_steps, k)
+            train_corr, val_corr, _, _ = evaluate(train_predict_list, val_predict_list, train_df, val_df, target_col)
+            train_corr_list.append(train_corr)
             val_corr_list.append(val_corr)
-        # save the value of k associated with the highest validation correlation
-        opt_k = val_corr_list[np.argmax(val_corr_list)] 
+            print('train_corr: ' + str(train_corr))
+            print('val_corr: ' + str(val_corr))
+        # get the index associated with the highest correlation on the validation set
+        opt_index = np.argmax(val_corr_list)
+        # save the value of k corresponding to the above index
+        opt_k = K_LIST[opt_index]
+        print(opt_k)
         opt_k_list.append(opt_k)
-    return np.mean(opt_k_list)
+    return int(np.mean(opt_k_list))
 
 def main():
     method, source_name, target_name, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type = get_raw_args(sys.argv, 13)
@@ -290,6 +313,7 @@ def main():
     target_train_df, target_test_df, n_samp, n_drug = helpers.get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac, split_type)
     # ================================
     # MAKE PREDICTIONS BY METHOD
+    assert method in ['raw', 'target_only', 'transfer']
     if method == 'raw':
         target_train_sd = helpers.get_sample_drug_ids(target_train_df)
         target_test_sd = helpers.get_sample_drug_ids(target_test_df)
@@ -297,25 +321,17 @@ def main():
         train_predictions, test_predictions = predict_raw(source_df, source_col, target_train_sd, target_test_sd)
         train_corr = evaluate_correlation(train_predictions, target_train_df, target_col)
         test_corr = evaluate_correlation(test_predictions, target_test_df, target_col)
-    elif method == 'target_only':
-        s_idx_test, d_idx_test = helpers.get_sample_drug_indices(target_test_df)
-        # TODO!
-        #k = choose_k('target_only', ...)
-        # ACTUALLY NEED TO RUN THE BELOW ON 10 MODEL RESTARTS!
-        train_predict_list, test_predict_list = predict_target_only_wrapper(target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
-        train_corr, test_corr, train_predictions, test_predictions = evaluate(train_predict_list, test_predict_list, target_train_df, target_test_df, target_col)
-    elif method == 'transfer':
-        s_idx_test, d_idx_test = helpers.get_sample_drug_indices(target_test_df)
-        source_df = helpers.get_source(data_fn, source_col)
-        # TODO!
-        #k = choose_k('transfer', ...)
-        # ACTUALLY NEED TO RUN THE BELOW ON 10 MODEL RESTARTS!
-        train_predict_list, test_predict_list = predict_transfer_wrapper(source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, 
-            n_drug, n_steps, k)
-        train_corr, test_corr, train_predictions, test_predictions = evaluate(train_predict_list, test_predict_list, target_train_df, target_test_df, target_col)
     else:
-        print('Error! Method must be one of: raw, transfer, target_only.')
-        return
+        s_idx_test, d_idx_test = helpers.get_sample_drug_indices(target_test_df)
+        if method == 'target_only':
+            k = choose_k('target_only', target_train_df, target_col, split_type, n_samp, n_drug, n_steps)
+            train_predict_list, test_predict_list = predict_target_only_wrapper(target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k)
+        elif method == 'transfer':
+            source_df = helpers.get_source(data_fn, source_col)
+            k = choose_k('transfer', target_train_df, target_col, split_type, n_samp, n_drug, n_steps, source_df, source_col)
+            train_predict_list, test_predict_list = predict_transfer_wrapper(source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, 
+                n_drug, n_steps, k)
+        train_corr, test_corr, train_predictions, test_predictions = evaluate(train_predict_list, test_predict_list, target_train_df, target_test_df, target_col)
     # ================================
     # EVALUATE PREDICTIONS AND SAVE
     # save to file
