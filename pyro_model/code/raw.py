@@ -121,18 +121,9 @@ def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_i
     autoguide = AutoNormal(modeling.transfer_model)
     svi = SVI(modeling.transfer_model, autoguide, optimizer, loss=Trace_ELBO())
     losses = []
-    # TODO: Find / Replace!
-    s_idx1 = s_idx_src
-    d_idx1 = d_idx_src
-    obs_1 = obs_src
-    s_idx2 = s_idx_train
-    d_idx2 = d_idx_train
-    obs_2 = obs_train
-    s_test_idx = s_idx_test
-    d_test_idx = d_idx_test
     for step in tqdm.trange(n_steps):
-        svi.step(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
-        loss = svi.evaluate_loss(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs_1, len(obs_1), obs_2, len(obs_2), r=r, k=k)
+        svi.step(n_samp, n_drug, s_idx_src, d_idx_src, s_idx_train, d_idx_train, obs_src, len(obs_src), obs_train, len(obs_train), r=r, k=k)
+        loss = svi.evaluate_loss(n_samp, n_drug, s_idx_src, d_idx_src, s_idx_train, d_idx_train, obs_src, len(obs_src), obs_train, len(obs_train), r=r, k=k)
         losses.append(loss)
     # MAKE INITIAL PREDICTIONS BASED ON MODEL
     # retrieve values out for s and d vectors
@@ -143,8 +134,8 @@ def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_i
     w_col_loc = pyro.param("AutoNormal.locs.w_col").detach().numpy()
     # predict function: takes in w_row, w_col, s, d --> mat2
     mat = matrix_transfer(s_loc, d_loc, w_row_loc, w_col_loc, k, r)
-    train_means = mat[s_idx2, d_idx2]
-    test_means = mat[s_test_idx, d_test_idx]
+    train_means = mat[s_idx_train, d_idx_train]
+    test_means = mat[s_idx_test, d_idx_test]
     return train_means, test_means
 
 def run_predict_transfer(model_seed, source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
@@ -189,23 +180,17 @@ def predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_t
     autoguide = AutoNormal(modeling.target_only_model)
     svi = SVI(modeling.target_only_model, autoguide, optimizer, loss=Trace_ELBO())
     losses = []
-    # TODO: Find / Replace!
-    s_idx = s_idx_train
-    d_idx = d_idx_train
-    obs = obs_train
-    s_test_idx = s_idx_test
-    d_test_idx = d_idx_test
     for step in tqdm.trange(n_steps):
-        svi.step(n_samp, n_drug, s_idx, d_idx, obs, len(obs), k=k)
-        loss = svi.evaluate_loss(n_samp, n_drug, s_idx, d_idx, obs, len(obs), k=k)
+        svi.step(n_samp, n_drug, s_idx_train, d_idx_train, obs_train, len(obs_train), k=k)
+        loss = svi.evaluate_loss(n_samp, n_drug, s_idx_train, d_idx_train, obs_train, len(obs_train), k=k)
         losses.append(loss)
     # MAKE INITIAL PREDICTIONS BASED ON MODEL
     # retrieve values out for s and d vectors
     s_loc = pyro.param("AutoNormal.locs.s").detach().numpy()
     d_loc = pyro.param("AutoNormal.locs.d").detach().numpy()
     mat = matrix_target_only(s_loc, d_loc, k)
-    train_means = mat[s_idx, d_idx]
-    test_means = mat[s_test_idx, d_test_idx]
+    train_means = mat[s_idx_train, d_idx_train]
+    test_means = mat[s_idx_test, d_idx_test]
     return train_means, test_means
 
 def run_predict_target_only(model_seed, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
