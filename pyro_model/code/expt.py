@@ -24,45 +24,34 @@ K_LIST = [5, 10]
 N_MODELS = 2
 N_SPLITS = 2
 
-def save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type):
+def save_params(method, source, target, split_type, holdout_frac, data_fn, write_dir, fold_fn, split_seed, n_steps):
     params = {}
     params['method'] = method
     params['source'] = source
     params['target'] = target
+    params['split_type'] = split_type
     params['holdout_frac'] = holdout_frac
     params['data_fn'] = data_fn
     params['write_dir'] = write_dir
     params['fold_fn'] = fold_fn
-    params['hyp_fn'] = hyp_fn
     params['split_seed'] = split_seed
-    params['model_seed'] = model_seed
-    params['k'] = k
-    params['r'] = r
     params['n_steps'] = n_steps
-    params['split_type'] = split_type
     helpers.write_pickle(params, write_dir + '/params.pkl')
 
-def check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type):
+def check_params(method, source, target, split_type, holdout_frac, data_fn, write_dir, fold_fn, split_seed, n_steps):
     assert method in ['raw', 'transfer', 'target_only']
-    assert target in ['REP', 'GDSC', 'CTD2', 'synth']
-    assert split_seed >= 0
-    if method == 'raw':
-        # raw can handle sample folds or random pairs
-        assert (fold_fn != "") or (0 <= holdout_frac and holdout_frac <= 1)
-        return
+    assert target in ['REP', 'GDSC', 'CTD2']
     assert split_type in ['random_split', 'sample_split']
-    assert n_steps > 0
-    assert model_seed >= 0
-    assert hyp_fn != "" or k >= 0
+    assert split_seed >= 0
+    assert n_steps >= 1000
     if method == 'target_only':
-        # target_only can't handle sample folds
-        assert split_type == 'random_split' 
+        assert split_type == 'random_split'
+    if method == 'transfer' or method == 'raw':
+        assert source in ['REP', 'GDSC', 'CTD2']
+    if split_type == 'random_split':
         assert 0 <= holdout_frac and holdout_frac <= 1
-        return
-    assert source in ['REP', 'GDSC', 'CTD2']
-    # transfer method can handle sample folds or random pairs
-    assert (split_type == 'sample_split' and fold_fn != "") or ((split_type == 'random_split') and (0 <= holdout_frac and holdout_frac <= 1))
-    assert hyp_fn != "" or r >= 0
+    if split_type == 'sample_split':
+        assert fold_fn != ""
 
 def get_raw_args(args, n):
     if len(args) != n + 1:
@@ -71,25 +60,17 @@ def get_raw_args(args, n):
     method = args[1].split("=")[1]
     source = args[2].split("=")[1]
     target = args[3].split("=")[1]
-    holdout_frac = float(args[4].split("=")[1])
-    data_fn = args[5].split("=")[1]
-    write_dir = args[6].split("=")[1]
-    fold_fn = args[7].split("=")[1]
-    hyp_fn = args[8].split("=")[1]
-    split_seed = int(args[9].split("=")[1])
-    model_seed = int(args[10].split("=")[1])
-    k = int(args[11].split("=")[1])
-    r = int(args[12].split("=")[1])
-    n_steps = int(args[13].split("=")[1])
-    # get split type
-    if fold_fn == "":
-        split_type = 'random_split'
-    else:
-        split_type = 'sample_split'
+    split_type = args[4].split("=")[1]
+    holdout_frac = float(args[5].split("=")[1])
+    data_fn = args[6].split("=")[1]
+    write_dir = args[7].split("=")[1]
+    fold_fn = args[8].split("=")[1]
+    n_steps = int(args[9].split("=")[1])
+    split_seed = int(args[10].split("=")[1])
     # verify that params are valid for method given and save
-    check_params(method, source, target, holdout_frac, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type)
-    save_params(method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type)
-    return method, source, target, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type
+    check_params(method, source, target, split_type, holdout_frac, data_fn, write_dir, fold_fn, split_seed, n_steps)
+    save_params(method, source, target, split_type, holdout_frac, data_fn, write_dir, fold_fn, split_seed, n_steps)
+    return method, source, target, split_type, holdout_frac, data_fn, write_dir, fold_fn, split_seed, n_steps
 
 def predict_raw_helper(source_df, source_col, target_sd):
     d = source_df.merge(target_sd, on=['sample_id', 'drug_id'], validate='one_to_one')
@@ -297,7 +278,7 @@ def save_predictions(write_fn, predictions, df):
     helpers.write_pickle(d, write_fn)
 
 def main():
-    method, source_name, target_name, holdout_frac, data_fn, write_dir, fold_fn, hyp_fn, split_seed, model_seed, k, r, n_steps, split_type = get_raw_args(sys.argv, 13)
+    method, source_name, target_name, split_type, holdout_frac, data_fn, write_dir, fold_fn, split_seed, n_steps = get_raw_args(sys.argv, 10)
     source_col, target_col = get_column_names(method, source_name, target_name)
     # Split target dataset into train and test, get number of samples and drugs in dataset
     target_train_df, target_test_df, n_samp, n_drug = helpers.get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac, split_type)

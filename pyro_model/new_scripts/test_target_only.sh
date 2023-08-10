@@ -4,19 +4,17 @@ codeDir="code"
 method="target_only"
 source=""
 target="GDSC"
+splitType="random_split"
 holdoutFrac=".8"
 dataFile="data/rep-gdsc-ctd2-mean-log.csv"
-writeDir="results/$(date +%F)/test_target_only"
+writeDir="results/$(date +%F)/test_transfer"
 foldFile=""
-hypFile=""
-splitSeed="0"
-modelSeed="1"
-k="10"
-r="10"
 nSteps="1000"
+splitSeed="0"
 
 mkdir -p "$writeDir"
 
-python3 "$codeDir"/raw.py method="$method" source="$source" target="$target" holdoutFrac="$holdoutFrac" dataFile="$dataFile" writeDir="$writeDir" \
-foldFile="$foldFile" hypFile="$hypFile" splitSeed="$splitSeed" modelSeed="$modelSeed" k="$k" r="$r" nSteps="$nSteps"
+python3 "$codeDir"/expt.py method="$method" source="$source" target="$target" splitType="$splitType" holdoutFrac="$holdoutFrac" dataFile="$dataFile" \
+writeDir="$writeDir" foldFile="$foldFile" nSteps="$nSteps" splitSeed="$splitSeed"
+
 date
