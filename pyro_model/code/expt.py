@@ -15,14 +15,9 @@ import helpers
 import model_helpers as modeling
 
 # Real values
-#K_LIST = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
-#N_MODELS = 10
-#N_SPLITS = 10
-
-# Test Values
-K_LIST = [5, 10]
-N_MODELS = 2
-N_SPLITS = 2
+K_LIST = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+N_MODELS = 5
+N_SPLITS = 5
 
 def save_params(method, source, target, split_type, holdout_frac, data_fn, write_dir, fold_fn, split_seed, n_steps):
     params = {}
@@ -43,7 +38,7 @@ def check_params(method, source, target, split_type, holdout_frac, data_fn, writ
     assert target in ['REP', 'GDSC', 'CTD2']
     assert split_type in ['random_split', 'sample_split']
     assert split_seed >= 0
-    assert n_steps >= 1000
+    assert n_steps >= 5
     if method == 'target_only':
         assert split_type == 'random_split'
     if method == 'transfer' or method == 'raw':
@@ -214,6 +209,10 @@ def evaluate(train_predict_list, test_predict_list, target_train_df, target_test
     test_result = test_corr_list[idx]
     train_predictions = train_predict_list[idx]
     test_predictions = test_predict_list[idx]
+    print('test_corr_list:')
+    print(test_corr_list)
+    print('train_corr_list:')
+    print(train_corr_list)
     return train_result, test_result, train_predictions, test_predictions
 
 # Returns column names in dataset for given method
