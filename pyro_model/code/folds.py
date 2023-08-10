@@ -4,7 +4,7 @@ import sys
 
 import helpers
 
-NFOLDS = 20
+NFOLDS = 10
 SEED = 101
 
 def get_fold_args(args, n):

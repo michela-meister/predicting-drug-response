@@ -88,7 +88,7 @@ def matrix_transfer(s, d, w_row, w_col, k, r):
     return mat2
 
 def predict_transfer(model_seed, s_idx_src, d_idx_src, obs_src, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k, r):
-    print('Transfer, k: ' + str(k) + ', r: ' + str(r))
+    #print('Transfer, k: ' + str(k) + ', r: ' + str(r))
     # FIT MODEL
     pyro.clear_param_store()
     pyro.util.set_rng_seed(model_seed)
@@ -147,7 +147,7 @@ def matrix_target_only(s, d, k):
     return np.matmul(np.transpose(s), d)
 
 def predict_target_only(model_seed, s_idx_train, d_idx_train, obs_train, s_idx_test, d_idx_test, n_samp, n_drug, n_steps, k):
-    print('Target only, k: ' + str(k))
+    #print('Target only, k: ' + str(k))
     # FIT MODEL
     pyro.clear_param_store()
     pyro.util.set_rng_seed(model_seed)
@@ -209,10 +209,10 @@ def evaluate(train_predict_list, test_predict_list, target_train_df, target_test
     test_result = test_corr_list[idx]
     train_predictions = train_predict_list[idx]
     test_predictions = test_predict_list[idx]
-    print('test_corr_list:')
-    print(test_corr_list)
-    print('train_corr_list:')
-    print(train_corr_list)
+    #print('test_corr_list:')
+    #print(test_corr_list)
+    #print('train_corr_list:')
+    #print(train_corr_list)
     return train_result, test_result, train_predictions, test_predictions
 
 # Returns column names in dataset for given method
@@ -232,7 +232,7 @@ def obs_to_tensor(vec):
     return torch.Tensor(vec)
 
 def choose_k(method, target_train_df, target_col, split_type, n_samp, n_drug, n_steps, source_df=None, source_col=None):
-    print('Choose k via cross validation')
+    #print('Choose k via cross validation')
     assert method in ['target_only', 'transfer']
     assert split_type in ['random_split', 'sample_split']
     if method == 'target_only':
@@ -242,34 +242,29 @@ def choose_k(method, target_train_df, target_col, split_type, n_samp, n_drug, n_
         assert source_col is not None
     # get data (either pairs or samples) based on split_type
     X = cross_val.get_items_to_split(target_train_df, split_type)
-    opt_k_list = []
     kf = KFold(n_splits=N_SPLITS, random_state=707, shuffle=True)
     kf.get_n_splits(X)
+    # array where cell (i,j) holds validation score from running i-th fold with k = K_LIST[j]
+    v = np.ones((N_SPLITS, len(K_LIST))) * -np.inf
     for i, (train_index, val_index) in enumerate(kf.split(X)):
-        print("Fold: " + str(i + 1))
+        #print("Fold: " + str(i + 1))
         train_df, val_df = cross_val.split_dataframe(target_train_df, 'sample_id', 'drug_id', X, split_type, train_index, val_index)
-        train_corr_list = []
-        val_corr_list = []
-        for k in K_LIST:
+        for j in range(0, len(K_LIST)):
+            k = K_LIST[j]
             s_idx_val, d_idx_val = helpers.get_sample_drug_indices(val_df)
-            print('Run ' + str(N_MODELS) + ' model restarts')
+            #print('Run ' + str(N_MODELS) + ' model restarts')
             if method == 'target_only':
                 train_predict_list, val_predict_list = predict_target_only_wrapper(train_df, target_col, s_idx_val, d_idx_val, n_samp, n_drug, n_steps, k)
             elif method == 'transfer':
                 train_predict_list, val_predict_list = predict_transfer_wrapper(source_df, source_col, train_df, target_col, s_idx_val, d_idx_val, n_samp, 
                     n_drug, n_steps, k)
-            train_corr, val_corr, _, _ = evaluate(train_predict_list, val_predict_list, train_df, val_df, target_col)
-            train_corr_list.append(train_corr)
-            val_corr_list.append(val_corr)
-            print('train_corr: ' + str(train_corr))
-            print('val_corr: ' + str(val_corr))
-        # get the index associated with the highest correlation on the validation set
-        opt_index = np.argmax(val_corr_list)
-        # save the value of k corresponding to the above index
-        opt_k = K_LIST[opt_index]
-        print(opt_k)
-        opt_k_list.append(opt_k)
-    return int(np.mean(opt_k_list))
+            _, val_corr, _, _ = evaluate(train_predict_list, val_predict_list, train_df, val_df, target_col)
+            v[i, j] = val_corr
+    # check that all entries have been filled in
+    assert np.sum(np.sum(v == -np.inf)) == 0
+    avg_v = np.mean(v, axis=0)
+    assert len(avg_v == len(K_LIST))
+    return K_LIST[np.argmax(avg_v)]
 
 def save_predictions(write_fn, predictions, df):
     assert len(predictions) == len(df)
