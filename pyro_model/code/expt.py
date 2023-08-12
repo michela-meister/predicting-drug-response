@@ -192,6 +192,7 @@ def predict_target_only_wrapper(target_train_df, target_col, s_idx_test, d_idx_t
 
 def evaluate_correlation(predictions, df, col):
     test = df[col].to_numpy()
+    assert len(predictions) == len(test)
     return helpers.pearson_correlation(predictions, test)
 
 def evaluate(train_predict_list, test_predict_list, target_train_df, target_test_df, target_col):
