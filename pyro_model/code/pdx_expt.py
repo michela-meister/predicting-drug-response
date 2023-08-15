@@ -5,6 +5,7 @@ import pyro.util
 from pyro.infer import SVI, Trace_ELBO
 from pyro.infer.autoguide import AutoNormal
 from pyro.optim import Adam
+import scipy.stats
 from sklearn.model_selection import KFold
 import sys
 import torch
@@ -33,7 +34,7 @@ def save_params(method, data_fn, write_dir, fold_fn, split_seed, n_steps):
 def check_params(method, data_fn, write_dir, fold_fn, split_seed, n_steps):
     assert method in ['raw', 'transfer']
     assert fold_fn != ""
-    assert split_seed in range(0, 12)
+    assert split_seed in range(0, 18)
     assert n_steps >= 5
 
 def get_args(args, n):
@@ -51,9 +52,15 @@ def get_args(args, n):
     save_params(method, data_fn, write_dir, fold_fn, split_seed, n_steps)
     return method, data_fn, write_dir, fold_fn, split_seed, n_steps
 
+def spearman_corr(predictions, df, col):
+    test = df[col].to_numpy()
+    assert len(predictions) == len(test)
+    res = scipy.stats.spearmanr(test, predictions)
+    return res.correlation
+
 def main():
     source_col = 'log10_ic50_(uM)'
-    target_col = 'T_C'
+    target_col = 'log_T_C_dec'
     split_type = 'sample_split'
     holdout_frac = -1
     method, data_fn, write_dir, fold_fn, split_seed, n_steps = get_args(sys.argv, 6)
@@ -84,7 +91,11 @@ def main():
     helpers.write_pickle(test_corr, write_dir + '/test.pkl')
     expt.save_predictions(write_dir + '/train_predictions.pkl', train_predictions, target_train_df)
     expt.save_predictions(write_dir + '/test_predictions.pkl', test_predictions, target_test_df)
-    # TODO: save predictions!!
+    # Save spearman correlation
+    train_spear = spearman_corr(train_predictions, target_train_df, target_col)
+    test_spear = spearman_corr(test_predictions, target_test_df, target_col)
+    helpers.write_pickle(train_spear, write_dir + '/train_spearman.pkl')
+    helpers.write_pickle(test_spear, write_dir + '/test_spearman.pkl')
 
     print('train_corr: ' + str(train_corr))
     print('test_corr: ' + str(test_corr))

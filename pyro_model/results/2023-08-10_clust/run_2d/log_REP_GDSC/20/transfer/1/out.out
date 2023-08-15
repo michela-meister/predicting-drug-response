@@ -1,0 +1,45 @@
+train_corr: 0.940884325475684
+test_corr: 0.8188090419256187
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@jy03>
+Subject: Job 68466615: </work/tansey/meisterm/new_scripts/expt.sh /work/tansey/meisterm/code transfer REP GDSC random_split .20 data/rep-gdsc-ctd2-mean-log.csv /work/tansey/meisterm/results/2023-08-10/run_2d/log_REP_GDSC/20/transfer/1 "" 1000 1> in cluster <juno> Done
+
+Job </work/tansey/meisterm/new_scripts/expt.sh /work/tansey/meisterm/code transfer REP GDSC random_split .20 data/rep-gdsc-ctd2-mean-log.csv /work/tansey/meisterm/results/2023-08-10/run_2d/log_REP_GDSC/20/transfer/1 "" 1000 1> was submitted from host <juno> by user <meisterm> in cluster <juno> at Thu Aug 10 17:58:23 2023
+Job was executed on host(s) <jy03>, in queue <general>, as user <meisterm> in cluster <juno> at Fri Aug 11 06:55:41 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Fri Aug 11 06:55:41 2023
+Terminated at Fri Aug 11 11:06:58 2023
+Results reported at Fri Aug 11 11:06:58 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/new_scripts/expt.sh /work/tansey/meisterm/code transfer REP GDSC random_split .20 data/rep-gdsc-ctd2-mean-log.csv /work/tansey/meisterm/results/2023-08-10/run_2d/log_REP_GDSC/20/transfer/1 "" 1000 1
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   15072.27 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                49
+    Run time :                                   15079 sec.
+    Turnaround time :                            61715 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-10/run_2d/log_REP_GDSC/20/transfer/1/err.err> for stderr output of this job.
+

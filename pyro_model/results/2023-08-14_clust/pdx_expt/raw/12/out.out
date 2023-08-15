@@ -1,0 +1,45 @@
+train_corr: 0.10027737719106715
+test_corr: -0.0348566493347657
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ji07>
+Subject: Job 68914622: </work/tansey/meisterm/new_scripts/pdx_expt.sh /work/tansey/meisterm/code raw /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_expt/raw/12 /work/tansey/meisterm/fold_info/pdx_folds.pkl 12 1000> in cluster <juno> Done
+
+Job </work/tansey/meisterm/new_scripts/pdx_expt.sh /work/tansey/meisterm/code raw /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_expt/raw/12 /work/tansey/meisterm/fold_info/pdx_folds.pkl 12 1000> was submitted from host <juno> by user <meisterm> in cluster <juno> at Mon Aug 14 20:26:19 2023
+Job was executed on host(s) <ji07>, in queue <general>, as user <meisterm> in cluster <juno> at Mon Aug 14 20:26:20 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Mon Aug 14 20:26:20 2023
+Terminated at Mon Aug 14 20:26:25 2023
+Results reported at Mon Aug 14 20:26:25 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/new_scripts/pdx_expt.sh /work/tansey/meisterm/code raw /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_expt/raw/12 /work/tansey/meisterm/fold_info/pdx_folds.pkl 12 1000
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   3.60 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                13
+    Run time :                                   5 sec.
+    Turnaround time :                            6 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-14/pdx_expt/raw/12/err.err> for stderr output of this job.
+
