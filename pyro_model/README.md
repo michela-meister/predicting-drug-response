@@ -1,4 +1,4 @@
-Welcome to the transfer learning project.
+Welcome to the drug-response transfer learning project.
 
 Datasets used:
 GDSC, REP, CTD2
