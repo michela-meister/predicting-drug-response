@@ -1,0 +1,34 @@
+Notes on how to recreate results.
+
+DATA CLEANING
+run clean_dataset.sh
+
+================= GDSC-REP-CTD2 =============================================
+
+RUN_2C / COMPARE TRANSFER TO RAW ON SAMPLE HOLDOUTS
+correlations: Documents/research/drug-response-repo/drug-response/pyro_model/results/2023-08-10_clust/run_2c/analysis/results.csv
+sample predictions: (directory) Documents/research/drug-response-repo/drug-response/pyro_model/results/2023-08-10_clust/run_2c
+
+RUN_2D / COMPARE TRANSFER TO TARGET-ONLY TO RAW ON VARYING HOLDOUT FRACTIONS
+correlations: Documents/research/drug-response-repo/drug-response/pyro_model/results/2023-08-10_clust/run_2d/analysis/results.csv
+other source directories: 2023-08-11_clust, 2023-08-12_clust
+sample predictions: N/A
+
+EMBEDDINGS / GDSC-REP-CTD2 EMBEDDINGS
+(directory) Documents/research/drug-response-repo/drug-response/pyro_model/results/2023-08-13_clust/embeddings_expt
+
+RAW ON AUC_OVERLAP
+(directory) Documents/research/drug-response-repo/drug-response/pyro_model/results/2023-08-14_clust/run_2c_raw_overlap
+
+================== PDO / PDX ================================================
+
+PDX_RUN_2C / COMPARE TRANSFER TO RAW ON SAMPLE HOLDOUTS, SMALL PDX DATA (yaspo_combined.csv)
+correlations: Documents/research/drug-response-repo/drug-response/pyro_model/results/2023-08-13_clust/pdx_expt/analysis/results.csv
+sample predictions: (directory)  Documents/research/drug-response-repo/drug-response/pyro_model/results/2023-08-13_clust/pdx_expt
+embeddings (small data): Documents/research/drug-response-repo/drug-response/pyro_model/results/2023-08-13_clust/pdx_embeddings_expt 
+
+PDX_RUN_2C / COMPARE TRANSFER TO RAW ON SAMPLE HOLDOUTS, EXTENDED PDX DATA, ALSO SPEARMAN (yaspo_combined_intersection.csv)
+(directory) Documents/research/drug-response-repo/drug-response/pyro_model/results/2023-08-14_clust/pdx_expt
+sample predictions: ''
+embeddings (extended): just ran...should save to 2023-08-15 on cluster
+
