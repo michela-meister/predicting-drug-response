@@ -1,0 +1,5 @@
+code/process_pdx_predictions.py generates predictions.csv
+
+data used:
+BASE_DIR = 'results/2023-08-14_clust/pdx_expt'
+(Should be on extended data set, where target is log(T/C)

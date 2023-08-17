@@ -1,0 +1,6 @@
+code/process_pdx.py
+
+This is the smaller pdx experiment with 12 samples and 9 drugs, and predicting T/C (not log(T/C) -- note that this is what is currently listed in code/pdx_expt.py)
+
+data used:
+BASE_DIR = 'results/2023-08-13_clust/pdx_expt'
