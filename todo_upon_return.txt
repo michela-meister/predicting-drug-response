@@ -1,12 +1,14 @@
 All plot info is in results/2023-08-17
-- Recreate run_2c plot (transfer vs raw on sample holdouts)
-- Recreate run_2d plot (transfer vs target-only vs raw)
-- Recreate pdx run_2c plot (transfer vs raw on ea. sample individually)
+X Recreate run_2c plot (transfer vs raw on sample holdouts)
+X Recreate pdx run_2c plot (transfer vs raw on ea. sample individually)
+- Create precision-recall / ROC curves from pdx predictions
+===
 - Plot embeddings for REP-GDSC-CTD2: initially just s (red) vs s' (blue)
 - Plot embeddings for pdx: inititally just s (red) vs s' (blue)
+===
+- compute raw score for run_2d using the auc_overlap (or do this after / later?)
+- Recreate run_2d plot (transfer vs target-only vs raw)
 - Create experiments saved plot from run_2d data
-- Create precision-recall / ROC curves from run_2c predictions
-- Create precision-recall / ROC curves from pdx predictions
 - ** Send above plots to Wes **
 
 - Are mannwhitenyu p-values in the pdx run_2c plot still the same? Does this make sense?
@@ -18,3 +20,7 @@ All plot info is in results/2023-08-17
 
 (Later:)
 - Create graphical abstract for paper 
+
+(Maybe:)
+- Create precision-recall / ROC curves from run_2c predictions
+

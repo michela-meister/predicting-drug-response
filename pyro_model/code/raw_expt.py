@@ -48,8 +48,8 @@ def main():
     # save to file
     helpers.write_pickle(train_corr, write_dir + '/train.pkl')
     helpers.write_pickle(test_corr, write_dir + '/test.pkl')
-    expt.save_predictions(write_dir + '/train_predictions.pkl', train_predictions, target_train_df)
-    expt.save_predictions(write_dir + '/test_predictions.pkl', test_predictions, target_test_df)
+    #expt.save_predictions(write_dir + '/train_predictions.pkl', train_predictions, target_train_df)
+    #expt.save_predictions(write_dir + '/test_predictions.pkl', test_predictions, target_test_df)
     # TODO: save predictions!!
 
     print('train_corr: ' + str(train_corr))
