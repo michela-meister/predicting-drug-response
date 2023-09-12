@@ -1,0 +1,45 @@
+/work/tansey/meisterm/data/yaspo_combined_intersection.csv
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ji16>
+Subject: Job 68915415: </work/tansey/meisterm/new_scripts/pdx_embeddings_expt.sh /work/tansey/meisterm/code /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_embeddings_expt 1000> in cluster <juno> Exited
+
+Job </work/tansey/meisterm/new_scripts/pdx_embeddings_expt.sh /work/tansey/meisterm/code /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_embeddings_expt 1000> was submitted from host <juno> by user <meisterm> in cluster <juno> at Mon Aug 14 20:27:54 2023
+Job was executed on host(s) <ji16>, in queue <general>, as user <meisterm> in cluster <juno> at Mon Aug 14 20:27:55 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Mon Aug 14 20:27:55 2023
+Terminated at Tue Aug 15 00:27:55 2023
+Results reported at Tue Aug 15 00:27:55 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/new_scripts/pdx_embeddings_expt.sh /work/tansey/meisterm/code /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_embeddings_expt 1000
+------------------------------------------------------------
+
+TERM_RUNLIMIT: job killed after reaching LSF run time limit.
+Exited with signal termination: 19.
+
+Resource usage summary:
+
+    CPU time :                                   10575.00 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                77
+    Run time :                                   14402 sec.
+    Turnaround time :                            14401 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-14/pdx_embeddings_expt/err.err> for stderr output of this job.
+

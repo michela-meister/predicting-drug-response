@@ -1,0 +1,86 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ji10>
+Subject: Job 68768035: </work/tansey/meisterm/new_scripts/embeddings_expt.sh /work/tansey/meisterm/code GDSC REP "" /work/tansey/meisterm/results/2023-08-13/embeddings_expt/log_GDSC_REP 1000> in cluster <juno> Exited
+
+Job </work/tansey/meisterm/new_scripts/embeddings_expt.sh /work/tansey/meisterm/code GDSC REP "" /work/tansey/meisterm/results/2023-08-13/embeddings_expt/log_GDSC_REP 1000> was submitted from host <juno> by user <meisterm> in cluster <juno> at Sun Aug 13 23:50:00 2023
+Job was executed on host(s) <ji10>, in queue <general>, as user <meisterm> in cluster <juno> at Sun Aug 13 23:50:06 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Sun Aug 13 23:50:06 2023
+Terminated at Sun Aug 13 23:50:14 2023
+Results reported at Sun Aug 13 23:50:14 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/new_scripts/embeddings_expt.sh /work/tansey/meisterm/code GDSC REP "" /work/tansey/meisterm/results/2023-08-13/embeddings_expt/log_GDSC_REP 1000
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   3.36 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                13
+    Run time :                                   7 sec.
+    Turnaround time :                            14 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-13/embeddings_expt/log_GDSC_REP/err.err> for stderr output of this job.
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ji04>
+Subject: Job 68768060: </work/tansey/meisterm/new_scripts/embeddings_expt.sh /work/tansey/meisterm/code GDSC REP data/rep-gdsc-ctd2-mean-log.csv /work/tansey/meisterm/results/2023-08-13/embeddings_expt/log_GDSC_REP 1000> in cluster <juno> Done
+
+Job </work/tansey/meisterm/new_scripts/embeddings_expt.sh /work/tansey/meisterm/code GDSC REP data/rep-gdsc-ctd2-mean-log.csv /work/tansey/meisterm/results/2023-08-13/embeddings_expt/log_GDSC_REP 1000> was submitted from host <juno> by user <meisterm> in cluster <juno> at Sun Aug 13 23:51:35 2023
+Job was executed on host(s) <ji04>, in queue <general>, as user <meisterm> in cluster <juno> at Sun Aug 13 23:51:41 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Sun Aug 13 23:51:41 2023
+Terminated at Mon Aug 14 02:56:02 2023
+Results reported at Mon Aug 14 02:56:02 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/new_scripts/embeddings_expt.sh /work/tansey/meisterm/code GDSC REP data/rep-gdsc-ctd2-mean-log.csv /work/tansey/meisterm/results/2023-08-13/embeddings_expt/log_GDSC_REP 1000
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   11030.15 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                77
+    Run time :                                   11062 sec.
+    Turnaround time :                            11067 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-13/embeddings_expt/log_GDSC_REP/err.err> for stderr output of this job.
+

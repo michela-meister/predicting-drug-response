@@ -1,0 +1,88 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ji14>
+Subject: Job 68913893: </work/tansey/meisterm/new_scripts/pdx_expt.sh /work/tansey/meisterm/code transfer /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_expt/transfer/3 /work/tansey/meisterm/fold_info/pdx_folds.pkl 3 1000> in cluster <juno> Done
+
+Job </work/tansey/meisterm/new_scripts/pdx_expt.sh /work/tansey/meisterm/code transfer /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_expt/transfer/3 /work/tansey/meisterm/fold_info/pdx_folds.pkl 3 1000> was submitted from host <juno> by user <meisterm> in cluster <juno> at Mon Aug 14 20:24:35 2023
+Job was executed on host(s) <ji14>, in queue <general>, as user <meisterm> in cluster <juno> at Mon Aug 14 20:24:37 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Mon Aug 14 20:24:37 2023
+Terminated at Mon Aug 14 22:45:55 2023
+Results reported at Mon Aug 14 22:45:55 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/new_scripts/pdx_expt.sh /work/tansey/meisterm/code transfer /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_expt/transfer/3 /work/tansey/meisterm/fold_info/pdx_folds.pkl 3 1000
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   8452.54 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                77
+    Run time :                                   8479 sec.
+    Turnaround time :                            8480 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-14/pdx_expt/transfer/3/err.err> for stderr output of this job.
+
+train_corr: 0.17674660557450533
+test_corr: 0.35513665242710907
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@ji14>
+Subject: Job 68914592: </work/tansey/meisterm/new_scripts/pdx_expt.sh /work/tansey/meisterm/code transfer /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_expt/transfer/3 /work/tansey/meisterm/fold_info/pdx_folds.pkl 3 1000> in cluster <juno> Done
+
+Job </work/tansey/meisterm/new_scripts/pdx_expt.sh /work/tansey/meisterm/code transfer /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_expt/transfer/3 /work/tansey/meisterm/fold_info/pdx_folds.pkl 3 1000> was submitted from host <juno> by user <meisterm> in cluster <juno> at Mon Aug 14 20:26:18 2023
+Job was executed on host(s) <ji14>, in queue <general>, as user <meisterm> in cluster <juno> at Mon Aug 14 20:26:20 2023
+</home/meisterm> was used as the home directory.
+</work/tansey/meisterm> was used as the working directory.
+Started at Mon Aug 14 20:26:20 2023
+Terminated at Mon Aug 14 23:48:58 2023
+Results reported at Mon Aug 14 23:48:58 2023
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/work/tansey/meisterm/new_scripts/pdx_expt.sh /work/tansey/meisterm/code transfer /work/tansey/meisterm/data/yaspo_combined_intersection.csv /work/tansey/meisterm/results/2023-08-14/pdx_expt/transfer/3 /work/tansey/meisterm/fold_info/pdx_folds.pkl 3 1000
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   12123.27 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     32.00 GB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                77
+    Run time :                                   12160 sec.
+    Turnaround time :                            12160 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file </work/tansey/meisterm/results/2023-08-14/pdx_expt/transfer/3/err.err> for stderr output of this job.
+

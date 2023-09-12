@@ -1,0 +1,85 @@
+MODEL SELECTION
+X create heatmap for train and test
+X create individual line plots (by r and k)
+X combine everything into a new digest_heatmap.py, and run on most recent cluster scripts
+===
+X write out python script to clean data (clean_dataset.py)
+X implement data cleaning that does log(auc)
+X pass log_ prefix into script!
+X write pipeline to run model, post-process, and copy data back to local storage in 1 - 2 clicks!
+===
+X test locally on small sample
+- copy all scripts over to cluster 
+- test on small sample
+- run pipeline on all pairs of datasets w log(auc) & random-holdout
+===
+- implement cross-validation holding out samples
+- implement switch between random-holdout and sample-holdout
+===
+=============================================================
+- run on all pairs of datasets w/ sample-holdout & log(auc)
+- post-process all data
+- choose the best model parameters
+=============================================================
+- discuss plots w Wes to choose parameters
+- Outcomes: 
+--- we know the best (r, k) to use for each dataset combination --> choose (r, k) peak
+--- we know whether to use auc or log(auc) or whether there is any difference
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PDX DATA
+- download all datafiles
+- clean data so that it can be processed by the model: may require fitting auc curves, getting data into T/C format
+- create cleaning + stats pipeline: clean, take logs, do normality tests, spit out basic stats
+- run pdx data through cleaning + stats pipeline
+- discuss results with Wes
+=============================================================
+- Outcome: Know whether this data works for our purposes
+
+PIPELINES
+- have full pipeline for cleaning, pre-processing/stats, and model selection. should result in final (r, k) value
+- run invitro data through cleaning + stats pipeline: may need separate pipeline
+
+DO MODEL SELECTION ON PDX DATA
+
+PREDICTING ON HELD-OUT SAMPLES: INVITRO
+
+PREDICTING ON HELD-OUT SAMPLES: PDO -> PDX
+
+COMPARISON TO NON-TRANSFER MODEL: INVITRO, PDO -> PDX
+- {random-holdout, sample-holdout}
+
+COSINE SIMILARITY OF DRUG EMBEDDINGS: INVITRO, PDO -> PDX
+
+CONTINUE WITH DRAFT (DAILY?)
+
+
+
