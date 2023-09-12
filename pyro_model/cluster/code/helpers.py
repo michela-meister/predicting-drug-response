@@ -4,26 +4,31 @@ import pickle
 import pyro.util
 import sys
 
+# Pickle obj and write to file fn
 def write_pickle(obj, fn):
     with open(fn, 'wb') as handle:
         pickle.dump(obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+# Read obj from file fn
 def read_pickle(fn):
     with open(fn, 'rb') as handle:
         obj = pickle.load(handle)
     return obj
 
+# Returns list of unique rows in two-column dataframe
 def get_unique_pairs(df, col1, col2):
     a = df[[col1, col2]].drop_duplicates()
     pairs = list(zip(a[col1], a[col2]))
     assert len(pairs) == len(set(pairs))
     return pairs
 
+# Index into list of pairs
 def index_pairs(pairs, indices):
     p = np.array(pairs)
     idx = np.array(indices)
     return list(map(tuple, p[idx]))
 
+# Split two-column dataframe by pairs into training set and test set
 def split_by_pairs(df, col1, col2, train_pairs, test_pairs):
     df['pair'] = list(zip(df[col1], df[col2]))
     train_df = df.loc[df['pair'].isin(train_pairs)]
@@ -32,8 +37,12 @@ def split_by_pairs(df, col1, col2, train_pairs, test_pairs):
     assert len(train_df) + len(test_df) == len(df)
     return train_df, test_df
 
+# Randomly split dataframe into train and test
+# df: dataframe
+# split_seed: random seed to split data
+# holdout_frac: fraction of data to holdout
 def random_split(df, split_seed, holdout_frac):
-    # get unique sample-drug pairs
+    # get unique sample-drug pairs: this ensures that no (sample, drug) appears in both training and test
     a = df[['sample_id', 'drug_id']].drop_duplicates()
     pairs = list(zip(a['sample_id'], a['drug_id']))
     assert len(pairs) == len(set(pairs))
@@ -54,9 +63,12 @@ def pairs_from_samples(df, sample_ids):
     samp_rows = df.loc[df.sample_id.isin(sample_ids)]
     return samp_rows['pair'].to_numpy()
 
+# Split data by fold
+# df: dataframe
+# fold_fn: file with list of sample folds
+# split_seed: index into list of sample folds
 def fold_split(df, fold_fn, split_seed):
     fold_list = read_pickle(fold_fn)
-    # split_seed is 1-indexed, but fold_list is 0-indexed --> subtract 1 off
     samples = list(fold_list[split_seed])
     # get all pairs corresponding to a set of samples
     train_df = df.loc[~df.sample_id.isin(samples)].drop_duplicates()
@@ -78,12 +90,14 @@ def get_train_test_pairs(df, fold_fn, split_seed, holdout_frac, split_type):
     else:
         return fold_split(df, fold_fn, split_seed)
 
+# Split df into train and test sets
 def split_train_test(df, fold_fn, split_seed, holdout_frac, split_type):
     # read in dataframe, and restrict to sample_id and drug_id
     train_pairs, test_pairs = get_train_test_pairs(df[['sample_id', 'drug_id']], fold_fn, split_seed, holdout_frac, split_type)
     train_df, test_df = split_by_pairs(df, 'sample_id', 'drug_id', train_pairs, test_pairs)
     return train_df, test_df
 
+# Get source dataframe
 def get_source(data_fn, source_col):
     df = pd.read_csv(data_fn)
     assert len(df) == len(df.drop_duplicates())
@@ -91,6 +105,7 @@ def get_source(data_fn, source_col):
     assert len(source_df) == len(df)
     return source_df
 
+# Get target train and test dataframes
 def get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac, split_type):
     df = pd.read_csv(data_fn)
     assert len(df) == len(df.drop_duplicates())
@@ -102,27 +117,32 @@ def get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac, split_typ
     assert len(target_train_df) + len(target_test_df) == len(df)
     return target_train_df, target_test_df, n_samp, n_drug
 
+# Get sample_ids and drug_ids
 def get_sample_drug_ids(df):
     sd = df[['sample_id', 'drug_id']].drop_duplicates()
     # confirming that df has no duplicate pairs
     assert len(sd) == len(df)
     return sd
 
+# Compute pearson correlation coefficient between vec1 and vec2
 def pearson_correlation(vec1, vec2):
     assert len(vec1) == len(vec2)
     pearson_corr = np.corrcoef(vec1, vec2)
     return pearson_corr[0, 1]
 
+# Get sample, drug indices from df
 def get_sample_drug_indices(df):
     s_idx = df['sample_id'].to_numpy()
     d_idx = df['drug_id'].to_numpy()
     return s_idx, d_idx
 
+# Compute z-score of value a
 def zscore(a):
     mu = np.mean(a)
     sigma = np.std(a)
     res = (a - mu) / sigma
     return mu, sigma, res
 
+# Compute inverse z-socre
 def inverse_zscore(b, mu, sigma):
     return (b * sigma) + mu

@@ -5,6 +5,9 @@ import seaborn as sns
 import scipy
 import sys
 
+# This script cleans the GDSC-CTD2-PRISM data.
+
+
 def list_to_indices(keys):
     n_keys = len(keys)
     values = range(n_keys)

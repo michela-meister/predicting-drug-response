@@ -15,6 +15,8 @@ import cross_val
 import helpers
 import model_helpers as modeling
 
+# This script computes the pearson correlation between the AUC_overlap values of the source and target. 
+
 # Returns column names in dataset for given method
 def get_column_names(method, source_name, target_name):
     suffix = '_auc_overlap_mean'
@@ -33,8 +35,7 @@ def main():
     source_col, target_col = get_column_names(method, source_name, target_name)
     # Split target dataset into train and test, get number of samples and drugs in dataset
     target_train_df, target_test_df, n_samp, n_drug = helpers.get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac, split_type)
-    # ================================
-    # MAKE PREDICTIONS BY METHOD
+    # Make predictions by method.
     assert method == 'raw'
     if method == 'raw':
         target_train_sd = helpers.get_sample_drug_ids(target_train_df)
@@ -43,9 +44,7 @@ def main():
         train_predictions, test_predictions = expt.predict_raw(source_df, source_col, target_train_sd, target_test_sd)
         train_corr = expt.evaluate_correlation(train_predictions, target_train_df, target_col)
         test_corr = expt.evaluate_correlation(test_predictions, target_test_df, target_col)
-    # ================================
-    # EVALUATE PREDICTIONS AND SAVE
-    # save to file
+    # Evaluate predictions and save.
     helpers.write_pickle(train_corr, write_dir + '/train.pkl')
     helpers.write_pickle(test_corr, write_dir + '/test.pkl')
     expt.save_predictions(write_dir + '/train_predictions.pkl', train_predictions, target_train_df)

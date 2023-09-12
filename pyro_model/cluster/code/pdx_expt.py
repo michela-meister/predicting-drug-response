@@ -16,11 +16,14 @@ import cross_val
 import helpers
 import model_helpers as modeling
 
-# Real values
+# This script applies BMT model to the PDO-PDX dataset.
+
+# Values for parameter k in PDO-PDX setting
 K_LIST = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 N_MODELS = 5
 N_SPLITS = 5
 
+# Save parameters to file.
 def save_params(method, data_fn, write_dir, fold_fn, split_seed, n_steps):
     params = {}
     params['method'] = method
@@ -31,12 +34,14 @@ def save_params(method, data_fn, write_dir, fold_fn, split_seed, n_steps):
     params['n_steps'] = n_steps
     helpers.write_pickle(params, write_dir + '/params.pkl')
 
+# Check validity of parameters passed in.
 def check_params(method, data_fn, write_dir, fold_fn, split_seed, n_steps):
     assert method in ['raw', 'transfer']
     assert fold_fn != ""
     assert split_seed in range(0, 18)
     assert n_steps >= 5
 
+# Read in parameters.
 def get_args(args, n):
     if len(args) != n + 1:
         print('Error! Expected ' + str(n + 1) + ' arguments but got ' + str(len(args)))
@@ -52,22 +57,23 @@ def get_args(args, n):
     save_params(method, data_fn, write_dir, fold_fn, split_seed, n_steps)
     return method, data_fn, write_dir, fold_fn, split_seed, n_steps
 
+# Compute spearman correlation between predictions and dataframe column.
 def spearman_corr(predictions, df, col):
     test = df[col].to_numpy()
     assert len(predictions) == len(test)
     res = scipy.stats.spearmanr(test, predictions)
     return res.correlation
 
+# Main function for running the PDO-PDX experiment.
 def main():
     source_col = 'log10_ic50_(uM)'
-    target_col = 'log_T_C_dec'
+    target_col = 'T_C'
     split_type = 'sample_split'
     holdout_frac = -1
     method, data_fn, write_dir, fold_fn, split_seed, n_steps = get_args(sys.argv, 6)
     # Split target dataset into train and test, get number of samples and drugs in dataset
     target_train_df, target_test_df, n_samp, n_drug = helpers.get_target(data_fn, fold_fn, target_col, split_seed, holdout_frac, split_type)
-    # ================================
-    # MAKE PREDICTIONS BY METHOD
+    # Make predictions by method.
     assert method in ['raw', 'transfer']
     if method == 'raw':
         target_train_sd = helpers.get_sample_drug_ids(target_train_df)
@@ -79,14 +85,14 @@ def main():
     else:
         s_idx_test, d_idx_test = helpers.get_sample_drug_indices(target_test_df)
         source_df = helpers.get_source(data_fn, source_col)
+        # Choose k
         k = expt.choose_k('transfer', target_train_df, target_col, split_type, n_samp, n_drug, n_steps, source_df, source_col)
         helpers.write_pickle(k, write_dir + '/k.pkl')
+        # With k fixed, fit model.
         train_predict_list, test_predict_list = expt.predict_transfer_wrapper(source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, 
             n_drug, n_steps, k)    
         train_corr, test_corr, train_predictions, test_predictions = expt.evaluate(train_predict_list, test_predict_list, target_train_df, target_test_df, target_col)
-    # ================================
-    # EVALUATE PREDICTIONS AND SAVE
-    # save to file
+    # Evaluate predictions and save.
     helpers.write_pickle(train_corr, write_dir + '/train.pkl')
     helpers.write_pickle(test_corr, write_dir + '/test.pkl')
     expt.save_predictions(write_dir + '/train_predictions.pkl', train_predictions, target_train_df)

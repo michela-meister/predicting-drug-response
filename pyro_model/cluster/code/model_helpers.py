@@ -16,20 +16,24 @@ import pyro.distributions.constraints as constraints
 
 import helpers
 
+# Parameters for Gamma distributions
 ALPHA = .01
 BETA = .01
-    
-def get_model_inputs(train_fn, sample_fn, drug_fn):
-    df = pd.read_pickle(train_fn)
-    sample_dict = helpers.read_pickle(sample_fn)
-    drug_dict = helpers.read_pickle(drug_fn)
-    n_samp = len(sample_dict.keys())
-    n_drug = len(drug_dict.keys())
-    s_idx = df['s_idx'].to_numpy()
-    d_idx = df['d_idx'].to_numpy()
-    obs = torch.Tensor(df['log(V_V0)'])
-    return n_samp, n_drug, s_idx, d_idx, obs
 
+# BMT transfer model.
+# n_samp: number of samples total
+# n_drug: number of drugs total
+# s_idx1: list of sample source indices 
+# d_idx1: list of drug source indices 
+# s_idx2: list of sample target traning indices 
+# d_idx2: list of drug target training indices 
+# obs1: list of source observations 
+# n_obs1: length of obs1
+# obs2: list of target training observationt 
+# n_obs2: length of obs2
+# k: dimension of latent vectors and W matrix 
+# r: deprecated; outer functions set equal to k
+# Note: in the paper a sample has latent vectors c and c'; here they are called s and s'.
 def transfer_model(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs1=None, n_obs1=None, obs2=None, n_obs2=None, k=1, r=1):
     assert r <= k
     if obs1 is None and n_obs1 is None:
@@ -75,7 +79,7 @@ def transfer_model(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs1=None, n_
     w_col = torch.transpose(w_col, 0, 1)
     W = torch.matmul(w_col, w_row)
     assert (W.shape[0] == k) and (W.shape[1] == k)
-    # s'^T = Ws^T
+    # Compute s'^T = Ws^T
     spr_transpose = torch.matmul(W, torch.transpose(s, 0, 1))
     spr = torch.transpose(spr_transpose, 0, 1)
     assert (spr.shape[0] == n_samp) and (spr.shape[1] == k)
@@ -85,8 +89,16 @@ def transfer_model(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs1=None, n_
     sigma2 = pyro.sample('sigma2', dist.Gamma(ALPHA, BETA))
     with pyro.plate('data2_plate', n_obs2):
         data2 = pyro.sample('data2', dist.Normal(mean2, sigma2 * torch.ones(n_obs2)), obs=obs2)
-    # DO: create different vecs a, vecs sigma
 
+# Target-only model.
+# n_samp: number of samples total
+# n_drug: number of drugs total
+# s_idx: list of sample target training indices 
+# d_idx: list of drug target training indices 
+# obs: list of target training observations
+# n_obs: length of obs2
+# k: dimension of latent vectors and W matrix 
+# Note: in the paper a sample has latent vectors c and c'; here they are called s and s'.
 def target_only_model(n_samp, n_drug, s_idx, d_idx, obs=None, n_obs=None, k=1):
     if obs is None and n_obs is None:
         print('Error!: both obs and n_obs are None.')
@@ -111,44 +123,6 @@ def target_only_model(n_samp, n_drug, s_idx, d_idx, obs=None, n_obs=None, k=1):
     assert (mat.shape[0] == n_samp) and (mat.shape[1] == n_drug)
     mean = mat[s_idx, d_idx] + a
     sigma = pyro.sample('sigma', dist.Gamma(ALPHA, BETA))
-    with pyro.plate('data_plate', n_obs):
-        data = pyro.sample('data', dist.Normal(mean, sigma * torch.ones(n_obs)), obs=obs)
-    return data
-
-
-# n_samp: number of samples
-# n_drug: number of drugs
-# obs: torch.Tensor of observations
-# s_idx: numpy array where s_idx[i] is the index of the sample for the i-th observation
-# d_idx: numpy array where d_idx[i] is the index of the drug for the i-th observation
-def model(n_samp, n_drug, s_idx, d_idx, params, obs=None, n_obs=None, k=1):
-    if k != 1:
-        print('need k = 1!')
-    print('NORMAL MODEL!')
-    if obs is None and n_obs is None:
-        print('Error!: both obs and n_obs are None.')
-    if obs is not None:
-        n_obs = obs.shape[0]
-    # create global offset
-    alpha = torch.Tensor([params['alpha']])
-    beta = torch.Tensor([params['beta']])
-    a_sigma = pyro.param('a_sigma', dist.Gamma(alpha, beta), constraint=constraints.positive)
-    a = pyro.sample('a', dist.Normal(torch.zeros(()), a_sigma * torch.ones(())))   
-    # create s
-    s_sigma = pyro.param('s_sigma', dist.Gamma(alpha, beta), constraint=constraints.positive)
-    a_s_sigma = pyro.param('a_s_sigma', dist.Gamma(alpha, beta), constraint=constraints.positive)
-    with pyro.plate('s_plate', n_samp):
-        a_s = pyro.sample('a_s', dist.Normal(torch.zeros(n_samp), a_s_sigma * torch.ones(n_samp)))
-        s = pyro.sample('s', dist.Normal(torch.zeros(n_samp), s_sigma * torch.ones(n_samp)))
-    # create d
-    d_sigma = pyro.param('d_sigma', dist.Gamma(alpha, beta), constraint=constraints.positive)
-    a_d_sigma = pyro.param('a_d_sigma', dist.Gamma(alpha, beta), constraint=constraints.positive)
-    with pyro.plate('d_plate', n_drug):
-        a_d = pyro.sample('a_d', dist.Normal(torch.zeros(n_drug), a_d_sigma * torch.ones(n_drug)))
-        d = pyro.sample('d', dist.Normal(torch.zeros(n_drug), d_sigma * torch.ones(n_drug)))
-    # create data
-    mean = s[s_idx] * d[d_idx] + a_s[s_idx] + a_d[d_idx] + a
-    sigma = pyro.sample('sigma', dist.Gamma(params['alpha'], params['beta']))
     with pyro.plate('data_plate', n_obs):
         data = pyro.sample('data', dist.Normal(mean, sigma * torch.ones(n_obs)), obs=obs)
     return data
