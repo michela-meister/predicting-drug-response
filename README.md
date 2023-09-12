@@ -16,30 +16,29 @@ We used:
 - tqdm 4.65.0
  
 Files:
-- ```models.py```
-- ```expt.py```
-- ```pdx_expt.py```
-- ```helpers.py```
-- fold_info: Holds folds for experiments
+- expt.py: Implements pipeline for simulation studies on cell lines.
+- pdx_expt.py: Implements pipeline for simulations studies on POD-PDX data.
+- model_helpers.py: Defines BMT and target-only models.
+- helpers.py: Helper functions for reading, writing, and splitting data.
+- fold_info: Holds files with folds for Experiments 1 and 3. 
 
 Datasets & Cleaning:
-- PRISM-REP-GDSC data:
-	- Link to paper
-	- Which supplemental file to look at
-	- Raw data stored here:
-	- File for cleaning data here:
-	- Cleaned data here:
+- PRISM-GDSC-CTD2:
+	- Paper link: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7328899/
+	- Excel link: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7328899/bin/NIHMS1589633-supplement-Supplementary_Tables.xlsx (Supplementary Table 11)
+	- The raw data is ```data/rep-gdsc-ctd2.csv```
+	- To preprocess the raw data, run ```python3 code/clean_cell_line_data.py```, which outputs the file ```data/rep-gdsc-ctd2-mean-log.csv```.
 - PDO-PDX data:
-	- Link to paper
-	- Which supplemental file to look at
-	- Raw data stored here:
-	- File for cleaning data here:
-	- Cleaned data here:
+	- Paper link: https://www.nature.com/articles/ncomms14262 See Supplemental Data 14: Drug Sensitivity Data
+	- PDO data from sheets: PDO_Drug_Response, PDO_cetuximab_response
+	- PDX data from sheet: PDX_Drug_Response_TC
+	- The raw data is ```data/yaspo_pdo1.csv```, ```data/yaspo_pdo2.csv```, and ```data/yaspo_pdx.csv```.
+	- To preprocess the data, run ```python3 code/clean_pdo_pdx_data.py```, which outputs the file ```data/yaspo_combined.csv```.
 
 Results:
 - Results from our experiments are stored in ```results``` as files ```experiment1.csv```, ```experiment2.csv```, and ```experiment3.csv```.
 
 Reproducibility:
-- To reproduce the plots from the paper, run ```python3 plot_figure1.py```, ```python3 plot_figure2.py```, and ```python3 plot_figure3.py```.
-- To run the experiments from the paper, run ```sh ./run_experiment1.sh```, ```sh ./run_experiment2.sh```, and ```sh ./run_experiment3.sh```. Note that these scripts use bsub to submit jobs to an LSF system. 
+- To reproduce the plots from the paper, run ```python3 code/plot_figure1.py```, ```python3 code/plot_figure2.py```, and ```python3 code/plot_figure3.py```.
+- To run the experiments from the paper, run ```sh ./run_experiment1.sh```, ```sh ./run_experiment2.sh```, and ```sh ./run_experiment3.sh```. Note that these scripts require significant time and computing power to complete. They use bsub to submit jobs to an LSF system.
 
