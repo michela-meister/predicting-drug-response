@@ -1,5 +1,5 @@
 This repository accompanies the paper:        
-> Michela Meister, Christopher Tosh, and Wesley Tansey. "Predicting Drug Response via Transfer Learning". (TODO: Add link-to-paper)
+> Michela Meister, Christopher Tosh, and Wesley Tansey. [Predicting Drug Response via Transfer Learning.](./predicting-drug-response.pdf) 2023.
 
 ### Libraries  
 We used
