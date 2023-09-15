@@ -20,6 +20,7 @@ We used
 - ```pdx_expt.py```: Implements pipeline for simulations studies on PDO-PDX data.
 - ```model_helpers.py```: Defines BMT and target-only models.
 - ```helpers.py```: Helper functions for reading, writing, and splitting data.
+- ```cross_val.py```: Helpers for splitting data during cross-validation.
 - ```fold_info```: Directory holding folds for Experiments 1 and 3. 
 
 ### Data: Cell Line Datasets     
