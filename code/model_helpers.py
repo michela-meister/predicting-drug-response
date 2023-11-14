@@ -59,7 +59,7 @@ def transfer_model(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs1=None, n_
         with pyro.plate('k_d', k):
             d = pyro.sample('d', dist.Normal(0, d_sigma))
     # mat1 = sd
-    mat1 = torch.matmul(s, d) # should be: n-samp x n-drug
+    mat1 = torch.matmul(s, d) # matrix with dimension n-samp x n-drug
     assert (mat1.shape[0] == n_samp) and (mat1.shape[1] == n_drug)
     mean1 = mat1[s_idx1, d_idx1] + a1
     sigma1 = pyro.sample('sigma1', dist.Gamma(ALPHA, BETA))
