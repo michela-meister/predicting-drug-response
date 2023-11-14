@@ -364,7 +364,7 @@ def main():
         elif method == 'transfer':
             source_df = helpers.get_source(data_fn, source_col)
             k = choose_k('transfer', target_train_df, target_col, split_type, n_samp, n_drug, n_steps, source_df, source_col)
-            # with k fixed, fit target-only model
+            # with k fixed, fit transfer model
             train_predict_list, test_predict_list = predict_transfer_wrapper(source_df, source_col, target_train_df, target_col, s_idx_test, d_idx_test, n_samp, 
                 n_drug, n_steps, k)
         # Evaluate predictions
