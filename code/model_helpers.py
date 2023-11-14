@@ -47,19 +47,19 @@ def transfer_model(n_samp, n_drug, s_idx1, d_idx1, s_idx2, d_idx2, obs1=None, n_
     # create global offset
     a1_sigma = pyro.sample('a1_sigma', dist.Gamma(ALPHA, BETA))
     a1 = pyro.sample('a1', dist.Normal(0, a1_sigma))   
-    # create s
+    # create s: n_samp x k matrix
     s_sigma = pyro.sample('s_sigma', dist.Gamma(ALPHA, BETA))
     with pyro.plate('s_plate', n_samp):
         with pyro.plate('k_s', k):
             s = pyro.sample('s', dist.Normal(0, s_sigma))
     s = torch.transpose(s, 0, 1)
-    # create d
+    # create d: n_drug x k matrix
     d_sigma = pyro.sample('d_sigma', dist.Gamma(ALPHA, BETA))
     with pyro.plate('d_plate', n_drug):
         with pyro.plate('k_d', k):
             d = pyro.sample('d', dist.Normal(0, d_sigma))
-    # mat1 = sd
-    mat1 = torch.matmul(s, d) # matrix with dimension n-samp x n-drug
+    # mat1 = sd, has dimension n_samp x n_drug
+    mat1 = torch.matmul(s, d) 
     assert (mat1.shape[0] == n_samp) and (mat1.shape[1] == n_drug)
     mean1 = mat1[s_idx1, d_idx1] + a1
     sigma1 = pyro.sample('sigma1', dist.Gamma(ALPHA, BETA))
